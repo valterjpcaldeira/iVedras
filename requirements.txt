@@ -1,0 +1,39 @@
+# Core NLP and Transformers
+transformers>=4.40.0
+torch>=2.1.0
+sentencepiece  # Required by some HF tokenizers
+
+# spaCy (optional fallback or preprocessing)
+spacy>=3.7.0
+pt_core_news_lg @ https://github.com/explosion/spacy-models/releases/download/pt_core_news_lg-3.7.0/pt_core_news_lg-3.7.0-py3-none-any.whl
+
+# Geocoding
+geopy>=2.4.1
+
+# Flair (optional, heavy and slower)
+# flair==0.13.1
+# gdown  # Flair dependency for model downloads
+
+# Streamlit and visualization
+streamlit>=1.35.0
+streamlit-folium
+folium>=0.13
+plotly>=5.0.0
+
+# Data handling
+pandas>=2.0.0
+numpy>=1.26.0
+
+# ML and NLP
+scikit-learn>=1.4.0
+fuzzywuzzy>=0.18.0
+python-Levenshtein  # For fuzzywuzzy speedup
+
+# MongoDB
+pymongo>=4.0.0
+
+# Env
+python-dotenv>=1.0.0
+
+# Other
+# tqdm  # If you use progress bars
