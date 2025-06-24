@@ -369,8 +369,16 @@ with tab1:
     
     # Select boxes para filtros dentro de um expander fechado por padrão
     with st.sidebar.expander("Filtros", expanded=False):
-        selected_topic = st.selectbox("Selecione o Tópico", options=['Todos'] + list(df['topic'].unique()))
-        selected_urgency = st.selectbox("Selecione o Nível de Urgência", options=['Todos'] + list(df['urgency'].unique()))
+        if not df.empty and 'topic' in df.columns:
+            topic_options = ['Todos'] + list(df['topic'].unique())
+        else:
+            topic_options = ['Todos']
+        if not df.empty and 'urgency' in df.columns:
+            urgency_options = ['Todos'] + list(df['urgency'].unique())
+        else:
+            urgency_options = ['Todos']
+        selected_topic = st.selectbox("Selecione o Tópico", options=topic_options)
+        selected_urgency = st.selectbox("Selecione o Nível de Urgência", options=urgency_options)
 
     # Filtrar o dataset
     filtered_df = df.copy()
