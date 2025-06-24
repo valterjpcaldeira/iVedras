@@ -65,22 +65,23 @@ urgency_tokenizer = AutoTokenizer.from_pretrained(URGENCY_MODEL_PATH)
 # Map model labels to human-readable urgency names
 URGENCY_LABEL_MAP = {
     "LABEL_0": "Baixa",
-    "LABEL_1": "Média",
-    "LABEL_2": "Alta"
+    "LABEL_1": "Alta",
+    "LABEL_2": "Média",
+    "LABEL_3": "Baixa"
 }
 
 # Map model labels to human-readable topic names
 TOPIC_LABEL_MAP = {
-    "LABEL_0": "Limpeza e Resíduos",
-    "LABEL_1": "Infraestruturas e Obras",
-    "LABEL_2": "Trânsito e Mobilidade",
-    "LABEL_3": "Áreas Verdes e Espaços Públicos",
-    "LABEL_4": "Água e Saneamento",
-    "LABEL_5": "Animais e Ambiente",
-    "LABEL_6": "Serviços Sociais e Comunitários",
-    "LABEL_7": "Segurança e Ordem Pública",
-    "LABEL_8": "Comércio e Atividades Económicas",
-    "LABEL_9": "Outros"
+    "LABEL_9": "Limpeza e Resíduos",
+    "LABEL_8": "Infraestruturas e Obras",
+    "LABEL_7": "Trânsito e Mobilidade",
+    "LABEL_6": "Áreas Verdes e Espaços Públicos",
+    "LABEL_5": "Água e Saneamento",
+    "LABEL_4": "Animais e Ambiente",
+    "LABEL_3": "Serviços Sociais e Comunitários",
+    "LABEL_2": "Segurança e Ordem Pública",
+    "LABEL_1": "Comércio e Atividades Económicas",
+    "LABEL_0": "Outros"
 }
 
 def classificar_mensagem(texto):
