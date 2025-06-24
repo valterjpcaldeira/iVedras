@@ -57,8 +57,8 @@ topic_model = AutoModelForSequenceClassification.from_pretrained(TOPIC_MODEL_PAT
 topic_tokenizer = AutoTokenizer.from_pretrained(TOPIC_MODEL_PATH)
 
 # Carregar modelo, tokenizer e LabelEncoder para classificação de urgência
-URGENCY_MODEL_PATH = "iVedras_urgencia"
-URGENCY_ENCODER_PATH = "iVedras_urgencia_encoder.pkl"
+URGENCY_MODEL_PATH = "valterjpcaldeira/iVedrasUrgencia"
+URGENCY_ENCODER_PATH = "valterjpcaldeira/iVedrasUrgencia"
 urgency_model = AutoModelForSequenceClassification.from_pretrained(URGENCY_MODEL_PATH)
 urgency_tokenizer = AutoTokenizer.from_pretrained(URGENCY_MODEL_PATH)
 urgency_le = joblib.load(URGENCY_ENCODER_PATH)
