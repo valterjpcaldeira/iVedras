@@ -23,9 +23,8 @@ from folium.plugins import HeatMap
 import pydeck as pdk
 from opencage.geocoder import OpenCageGeocode
 from difflib import SequenceMatcher
-from rapidfuzz import process, fuzz
-import joblib
-import joblib  # or pickle
+from rapidfuzz import process, fuzz as rapidfuzz_fuzz
+
 
 
 # Fix for PyTorch and Streamlit conflict
@@ -180,7 +179,7 @@ def match_address(location, addresses_df, threshold=80):
         result = process.extractOne(
             extracted_norm,
             address_list,
-            scorer=fuzz.token_sort_ratio
+            scorer=rapidfuzz_fuzz.token_sort_ratio
         )
         if result is None:
             return None, None, None
@@ -233,7 +232,7 @@ def get_coordinates(location, city="Torres Vedras", country="Portugal"):
     if lat is not None and lon is not None:
         return lat, lon, best_match
     return get_coordinates_from_opencage(location, city, country)
-import streamlit as st
+
 def get_mongodb_client():
     try:
         uri = st.secrets["MONGODB_URI"]
