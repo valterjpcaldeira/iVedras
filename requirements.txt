@@ -4,7 +4,9 @@ transformers
 torch
 
 # spaCy and Portuguese model
-spacy
+spacy>=3.7.2
+thinc>=8.2.2
+
 pt_core_news_lg @ https://github.com/explosion/spacy-models/releases/download/pt_core_news_lg-3.7.0/pt_core_news_lg-3.7.0-py3-none-any.whl
 
 # Geocoding
@@ -20,7 +22,7 @@ pydeck  # For map visualizations
 
 # Data handling
 pandas
-numpy
+numpy>=1.23.0
 
 # ML and NLP
 scikit-learn
