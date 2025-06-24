@@ -25,6 +25,8 @@ from opencage.geocoder import OpenCageGeocode
 from difflib import SequenceMatcher
 from rapidfuzz import process, fuzz
 import joblib
+import joblib  # or pickle
+
 
 # Fix for PyTorch and Streamlit conflict
 os.environ['STREAMLIT_SERVER_WATCH_DIRS'] = 'false'
@@ -49,11 +51,10 @@ ner_pipeline = pipeline(
 )
 
 # Carregar modelo, tokenizer e LabelEncoder para classificação de tópicos
-TOPIC_MODEL_PATH = "iVedras_queixas"
-TOPIC_ENCODER_PATH = "iVedras_encoder.pkl"
+TOPIC_MODEL_PATH = "valterjpcaldeira/iVedrasQueixas"
+TOPIC_ENCODER_PATH = "valterjpcaldeira/iVedrasQueixas"
 topic_model = AutoModelForSequenceClassification.from_pretrained(TOPIC_MODEL_PATH)
 topic_tokenizer = AutoTokenizer.from_pretrained(TOPIC_MODEL_PATH)
-topic_le = joblib.load(TOPIC_ENCODER_PATH)
 
 # Carregar modelo, tokenizer e LabelEncoder para classificação de urgência
 URGENCY_MODEL_PATH = "iVedras_urgencia"
