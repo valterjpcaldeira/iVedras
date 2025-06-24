@@ -211,10 +211,11 @@ def get_coordinates(location, city="Torres Vedras", country="Portugal"):
     if lat is not None and lon is not None:
         return lat, lon, best_match
     return get_coordinates_from_opencage(location, city, country)
-
+import streamlit as st
 def get_mongodb_client():
     try:
-        client = MongoClient(os.getenv('MONGODB_URI'))
+        uri = st.secrets["MONGODB_URI"]
+        client = MongoClient(uri)
         return client
     except Exception as e:
         st.error(f"Erro ao ligar à base de dados MongoDB: {str(e)}")

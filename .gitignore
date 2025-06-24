@@ -5,3 +5,4 @@
 /vedras_env
 .env
 *.log
+secrets.toml
