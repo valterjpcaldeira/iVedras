@@ -62,6 +62,27 @@ URGENCY_ENCODER_PATH = "valterjpcaldeira/iVedrasUrgencia"
 urgency_model = AutoModelForSequenceClassification.from_pretrained(URGENCY_MODEL_PATH)
 urgency_tokenizer = AutoTokenizer.from_pretrained(URGENCY_MODEL_PATH)
 
+# Map model labels to human-readable urgency names
+URGENCY_LABEL_MAP = {
+    "LABEL_0": "Baixa",
+    "LABEL_1": "Média",
+    "LABEL_2": "Alta"
+}
+
+# Map model labels to human-readable topic names
+TOPIC_LABEL_MAP = {
+    "LABEL_0": "Limpeza e Resíduos",
+    "LABEL_1": "Infraestruturas e Obras",
+    "LABEL_2": "Trânsito e Mobilidade",
+    "LABEL_3": "Áreas Verdes e Espaços Públicos",
+    "LABEL_4": "Água e Saneamento",
+    "LABEL_5": "Animais e Ambiente",
+    "LABEL_6": "Serviços Sociais e Comunitários",
+    "LABEL_7": "Segurança e Ordem Pública",
+    "LABEL_8": "Comércio e Atividades Económicas",
+    "LABEL_9": "Outros"
+}
+
 def classificar_mensagem(texto):
     inputs = topic_tokenizer(texto, return_tensors="pt", truncation=True, padding=True)
     with torch.no_grad():
@@ -549,9 +570,11 @@ with tab2:
 
                     # Tópico (Classificação com modelo próprio)
                     topic, topic_score = classificar_mensagem(text_input)
+                    topic_display = TOPIC_LABEL_MAP.get(topic, topic)
 
                     # Urgência
                     urgencia, probas = classificar_urgencia(text_input)
+                    urgencia_display = URGENCY_LABEL_MAP.get(urgencia, urgencia)
 
                     # Resultados
                     st.subheader("📌 Resultados da Análise")
@@ -560,8 +583,8 @@ with tab2:
                         st.markdown(f"**Coordenadas:** Latitude = {lat:.6f}, Longitude = {lon:.6f}")
                     else:
                         st.markdown(f"**Coordenadas:** Latitude = {lat}, Longitude = {lon}")
-                    st.markdown(f"**Nível de urgência:** `{urgencia}`")
-                    st.markdown(f"**Tópico Detetado:** `{topic}`")
+                    st.markdown(f"**Nível de urgência:** `{urgencia_display}`")
+                    st.markdown(f"**Tópico Detetado:** `{topic_display}`")
 
                     # Exibir mapa
                     st.subheader("📍 Localização no Mapa")
@@ -582,9 +605,9 @@ with tab2:
                         'location': adresse_extracted,  # Use the extracted address directly
                         'latitude': lat,
                         'longitude': lon,
-                        'topic': topic,
+                        'topic': topic_display,
                         'topic_confidence': float(topic_score),
-                        'urgency': urgencia,
+                        'urgency': urgencia_display,
                         'urgency_probabilities': probas,
                         'timestamp': datetime.utcnow()
                     }
