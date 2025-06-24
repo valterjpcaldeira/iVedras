@@ -61,7 +61,6 @@ URGENCY_MODEL_PATH = "valterjpcaldeira/iVedrasUrgencia"
 URGENCY_ENCODER_PATH = "valterjpcaldeira/iVedrasUrgencia"
 urgency_model = AutoModelForSequenceClassification.from_pretrained(URGENCY_MODEL_PATH)
 urgency_tokenizer = AutoTokenizer.from_pretrained(URGENCY_MODEL_PATH)
-urgency_le = joblib.load(URGENCY_ENCODER_PATH)
 
 def classificar_mensagem(texto):
     inputs = topic_tokenizer(texto, return_tensors="pt", truncation=True, padding=True)
@@ -70,7 +69,8 @@ def classificar_mensagem(texto):
         probs = torch.softmax(logits, dim=1)
     predicted_class_id = logits.argmax().item()
     confidence = probs[0, predicted_class_id].item()
-    return topic_le.inverse_transform([predicted_class_id])[0], confidence
+    label = topic_model.config.id2label[predicted_class_id]
+    return label, confidence
 
 def classificar_urgencia(texto):
     inputs = urgency_tokenizer(texto, return_tensors="pt", truncation=True, padding=True)
@@ -79,9 +79,8 @@ def classificar_urgencia(texto):
         probs = torch.softmax(logits, dim=1)
     predicted_class_id = logits.argmax().item()
     confidence = probs[0, predicted_class_id].item()
-    label = urgency_le.inverse_transform([predicted_class_id])[0]
-    # Probabilidades por classe
-    probas = {urgency_le.inverse_transform([i])[0]: float(probs[0, i].item()) for i in range(probs.shape[1])}
+    label = urgency_model.config.id2label[predicted_class_id]
+    probas = {urgency_model.config.id2label[i]: float(probs[0, i].item()) for i in range(probs.shape[1])}
     return label, probas
 
 def normalize_address(addr):
