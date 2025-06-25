@@ -26,15 +26,6 @@ load_dotenv()
 # Initialize models
 # print("Loading models...")
 
-# Load NER model with explicit device mapping
-ner_pipeline = pipeline(
-    "ner",
-    model="lfcc/bert-portuguese-ner",
-    aggregation_strategy="simple",
-    device=-1,  # Force CPU usage
-    local_files_only=False
-)
-
 # Carregar modelo, tokenizer e LabelEncoder para classificação de tópicos
 TOPIC_MODEL_PATH = "valterjpcaldeira/iVedrasQueixas"
 TOPIC_ENCODER_PATH = "valterjpcaldeira/iVedrasQueixas"
