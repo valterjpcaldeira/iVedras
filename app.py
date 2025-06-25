@@ -29,6 +29,28 @@ load_dotenv()
 HF_API_TOKEN = os.getenv("HF_API_TOKEN")
 HF_HEADERS = {"Authorization": f"Bearer {HF_API_TOKEN}"}
 
+FLY_API_URL = "https://ivedras-topic-api.fly.dev/predict"
+
+TOPIC_LABELS = [
+    "Limpeza e Resíduos",
+    "Infraestruturas e Obras",
+    "Trânsito e Mobilidade",
+    "Áreas Verdes e Espaços Públicos",
+    "Água e Saneamento",
+    "Animais e Ambiente",
+    "Serviços Sociais e Comunitários",
+    "Segurança e Ordem Pública",
+    "Comércio e Atividades Económicas",
+    "Outros"
+]
+
+# Add this mapping at the top, after TOPIC_LABELS
+URGENCY_LABELS = ["Alta", "Média", "Baixa"]
+URGENCY_LABEL_MAP = {0: "Alta", 1: "Média", 2: "Baixa", "LABEL_0": "Alta", "LABEL_1": "Média", "LABEL_2": "Baixa", "alta": "Alta", "media": "Média", "baixa": "Baixa"}
+
+# Update the urgency API URL
+iVEDRAS_URGENCY_API_URL = "https://ivedras-urgency-api.fly.dev/predict"
+
 # NER API call
 def run_ner(text):
     model_id = "lfcc/bert-portuguese-ner"
@@ -39,17 +61,17 @@ def run_ner(text):
 
 # Topic classification API call
 def run_topic_classification(text):
-    model_id = "valterjpcaldeira/iVedrasQueixas"
-    api_url = f"https://api-inference.huggingface.co/models/{model_id}"
-    response = requests.post(api_url, headers=HF_HEADERS, json={"inputs": text})
+    response = requests.post(
+        FLY_API_URL,
+        json={"text": text},
+        timeout=10
+    )
     response.raise_for_status()
     return response.json()
 
 # Urgency classification API call
 def run_urgency_classification(text):
-    model_id = "valterjpcaldeira/iVedrasUrgencia"
-    api_url = f"https://api-inference.huggingface.co/models/{model_id}"
-    response = requests.post(api_url, headers=HF_HEADERS, json={"inputs": text})
+    response = requests.post(iVEDRAS_URGENCY_API_URL, json={"text": text}, timeout=10)
     response.raise_for_status()
     return response.json()
 
@@ -75,24 +97,20 @@ def extract_addresses(text):
 
 def classificar_mensagem(texto):
     result = run_topic_classification(texto)
-    # HuggingFace API returns a list of dicts with 'label' and 'score'
-    if isinstance(result, list) and len(result) > 0:
-        label = result[0]['label']
-        confidence = result[0]['score']
-        return label, confidence
-    elif isinstance(result, dict) and 'label' in result:
-        return result['label'], result.get('score', 1.0)
-    return 'LABEL_0', 0.0
+    label_id = result["label_id"]
+    confidence = result["confidence"]
+    label = TOPIC_LABELS[label_id] if 0 <= label_id < len(TOPIC_LABELS) else str(label_id)
+    return label, confidence
 
 def classificar_urgencia(texto):
     result = run_urgency_classification(texto)
-    # HuggingFace API returns a list of dicts with 'label' and 'score'
-    if isinstance(result, list) and len(result) > 0:
-        label = result[0]['label']
-        probas = {r['label']: r['score'] for r in result}
+    # New API returns a dict with 'label_id' and 'confidence'
+    if isinstance(result, dict) and "label_id" in result:
+        label_id = result["label_id"]
+        confidence = result["confidence"]
+        label = URGENCY_LABEL_MAP.get(label_id, str(label_id))
+        probas = {label: confidence}
         return label, probas
-    elif isinstance(result, dict) and 'label' in result:
-        return result['label'], {result['label']: result.get('score', 1.0)}
     return 'LABEL_0', {}
 
 def normalize_address(addr):
