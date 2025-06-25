@@ -80,7 +80,7 @@ def run_topic_classification(text):
 
 # Urgency classification API call
 def run_urgency_classification(text):
-    response = requests.post(iVEDRAS_URGENCY_API_URL, json={"text": text}, timeout=10)
+    response = requests.post(iVEDRAS_URGENCY_API_URL, json={"text": text}, timeout=60)
     response.raise_for_status()
     return response.json()
 
