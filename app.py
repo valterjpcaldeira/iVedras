@@ -51,6 +51,9 @@ URGENCY_LABEL_MAP = {0: "Alta", 1: "Média", 2: "Baixa", "LABEL_0": "Alta", "LAB
 # Update the urgency API URL
 iVEDRAS_URGENCY_API_URL = "https://ivedras-urgency-api.fly.dev/predict"
 
+# After TOPIC_LABELS
+TOPIC_LABEL_MAP = {label: label for label in TOPIC_LABELS}
+
 # NER API call
 def run_ner(text):
     model_id = "lfcc/bert-portuguese-ner"
