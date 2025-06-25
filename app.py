@@ -64,13 +64,19 @@ def run_ner(text):
 
 # Topic classification API call
 def run_topic_classification(text):
-    response = requests.post(
-        FLY_API_URL,
-        json={"text": text},
-        timeout=60
-    )
-    response.raise_for_status()
-    return response.json()
+    try:
+        response = requests.post(
+            FLY_API_URL,
+            json={"text": text},
+            timeout=60
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print("Request failed:", e)
+        if hasattr(e, 'response') and e.response is not None:
+            print("Response content:", e.response.text)
+        raise
 
 # Urgency classification API call
 def run_urgency_classification(text):
