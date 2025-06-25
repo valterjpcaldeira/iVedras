@@ -133,94 +133,39 @@ def normalize_address(addr):
     addr = re.sub(r'\s+', ' ', addr).strip()  # remove excess whitespace
     return addr
 
-try:
-    addresses_df = pd.read_csv("moradas_torres_vedras.csv")
-    addresses_df = addresses_df.dropna(subset=['address', 'latitude', 'longitude'])
-    addresses_df['normalized_address'] = addresses_df['address'].apply(normalize_address)
-except Exception as e:
-    addresses_df = None
-
-# Predefined topics for classification
-topicos_queixas = [
-    "Limpeza e Resíduos",
-    "Infraestruturas e Obras",
-    "Trânsito e Mobilidade",
-    "Áreas Verdes e Espaços Públicos",
-    "Água e Saneamento",
-    "Animais e Ambiente",
-    "Serviços Sociais e Comunitários",
-    "Segurança e Ordem Pública",
-    "Comércio e Atividades Económicas",
-    "Outros"
-]
-
-def calculate_similarity(str1, str2):
-    str1 = str(str1) if pd.notna(str1) else ""
-    str2 = str(str2) if pd.notna(str2) else ""
-    return SequenceMatcher(None, str1.lower(), str2.lower()).ratio()
-
-def find_similar_address(extracted_address, addresses_df, threshold=0.4):
-    best_match = None
-    best_score = 0
-    best_lat = None
-    best_lon = None
-    for idx, row in addresses_df.iterrows():
-        db_address = row['address']
-        if pd.isna(db_address):
-            continue
-        similarity = calculate_similarity(extracted_address, db_address)
-        if similarity > best_score:
-            best_score = similarity
-            best_match = db_address
-            best_lat = row.get('latitude', None)
-            best_lon = row.get('longitude', None)
-    if best_score >= threshold:
-        return best_match, best_score, best_lat, best_lon
-    else:
-        return None, best_score, None, None
-
-def match_address(location, addresses_df, threshold=80):
-    if addresses_df is None or addresses_df.empty:
-        return None, None, None
-    required_cols = {'address', 'latitude', 'longitude', 'normalized_address'}
-    if not required_cols.issubset(addresses_df.columns):
-        return None, None, None
-    postal_code_match = re.fullmatch(r"\d{4}-\d{3}", str(location).strip())
-    if postal_code_match:
-        mask = addresses_df['address'].astype(str).str.contains(location)
-        matches = addresses_df[mask]
-        if not matches.empty:
-            row = matches.iloc[0]
-            return row['address'], row['latitude'], row['longitude']
-        else:
-            return None, None, None
-    extracted_norm = normalize_address(location)
-    address_list = addresses_df['normalized_address'].tolist()
-    if not address_list:
-        return None, None, None
-    try:
-        result = process.extractOne(
-            extracted_norm,
-            address_list,
-            scorer=rapidfuzz_fuzz.token_sort_ratio
-        )
-        if result is None:
-            return None, None, None
-        match, score, index = result
-    except Exception:
-        return None, None, None
-    if score >= threshold:
+def get_address_from_mongodb(normalized_address):
+    client = get_mongodb_client()
+    if client:
         try:
-            row = addresses_df.iloc[index]
-            return row['address'], row['latitude'], row['longitude']
-        except Exception:
-            return None, None, None
-    else:
-        return None, None, None
+            db = client['complaints_db']
+            collection = db['addresses']
+            # Try to find the address by normalized_address
+            address_doc = collection.find_one({'normalized_address': normalized_address})
+            if address_doc:
+                return address_doc['address'], address_doc['latitude'], address_doc['longitude']
+        except Exception as e:
+            st.error(f"Erro ao obter morada da base de dados MongoDB: {str(e)}")
+        finally:
+            client.close()
+    return None, None, None
+
+def match_address(location, threshold=80):
+    # Normalize the address
+    normalized = normalize_address(location)
+    # Try to get the address from MongoDB
+    return get_address_from_mongodb(normalized)
+
+def get_coordinates(location, city="Torres Vedras", country="Portugal"):
+    # Try to get coordinates from MongoDB
+    address, lat, lon = match_address(location)
+    if lat is not None and lon is not None:
+        return lat, lon, address
+    # Fallback to OpenCage
+    return get_coordinates_from_opencage(location, city, country)
 
 def get_coordinates_from_csv(location):
     if addresses_df is not None:
-        best_match, lat, lon = match_address(location, addresses_df,55)
+        best_match, lat, lon = match_address(location,55)
         if isinstance(lat, str):
             lat = lat.replace('GPS: ','')
         if best_match is not None and lat is not None and lon is not None:
@@ -249,12 +194,6 @@ def get_coordinates_from_opencage(location, city="Torres Vedras", country="Portu
             return None, None, None
     except Exception:
         return None, None, None
-
-def get_coordinates(location, city="Torres Vedras", country="Portugal"):
-    lat, lon, best_match = get_coordinates_from_csv(location)
-    if lat is not None and lon is not None:
-        return lat, lon, best_match
-    return get_coordinates_from_opencage(location, city, country)
 
 def get_mongodb_client():
     try:
