@@ -14,6 +14,7 @@ from fuzzywuzzy import fuzz
 import pydeck as pdk
 from opencage.geocoder import OpenCageGeocode
 from rapidfuzz import process, fuzz as rapidfuzz_fuzz
+import requests
 
 
 
@@ -96,26 +97,75 @@ TOPIC_LABEL_MAP = {
     "LABEL_0": "Outros"
 }
 
+# HuggingFace Inference API setup
+HF_API_TOKEN = os.getenv("HF_API_TOKEN")
+HF_HEADERS = {"Authorization": f"Bearer {HF_API_TOKEN}"}
+
+# NER API call
+def run_ner(text):
+    model_id = "lfcc/bert-portuguese-ner"
+    api_url = f"https://api-inference.huggingface.co/models/{model_id}"
+    response = requests.post(api_url, headers=HF_HEADERS, json={"inputs": text})
+    response.raise_for_status()
+    return response.json()
+
+# Topic classification API call
+def run_topic_classification(text):
+    model_id = "valterjpcaldeira/iVedrasQueixas"
+    api_url = f"https://api-inference.huggingface.co/models/{model_id}"
+    response = requests.post(api_url, headers=HF_HEADERS, json={"inputs": text})
+    response.raise_for_status()
+    return response.json()
+
+# Urgency classification API call
+def run_urgency_classification(text):
+    model_id = "valterjpcaldeira/iVedrasUrgencia"
+    api_url = f"https://api-inference.huggingface.co/models/{model_id}"
+    response = requests.post(api_url, headers=HF_HEADERS, json={"inputs": text})
+    response.raise_for_status()
+    return response.json()
+
+def extract_addresses(text):
+    entities = run_ner(text)
+    extracted_addresses = []
+    # Extract postal codes in the format 2560-374
+    import re
+    postal_codes = re.findall(r'\b\d{4}-\d{3}\b', text)
+    extracted_addresses.extend(postal_codes)
+    for entity in entities:
+        # HuggingFace NER returns a list of dicts with 'entity_group' and 'word'
+        if isinstance(entity, dict) and entity.get('entity_group') in ['Local', 'ORG', 'PER', 'LOC', 'GPE']:
+            extracted_addresses.append(entity['word'])
+        # Some models return a list of lists
+        elif isinstance(entity, list):
+            for ent in entity:
+                if ent.get('entity_group') in ['Local', 'ORG', 'PER', 'LOC', 'GPE']:
+                    extracted_addresses.append(ent['word'])
+    # Remove duplicates
+    all_extracted = list(set(extracted_addresses))
+    return all_extracted
+
 def classificar_mensagem(texto):
-    inputs = topic_tokenizer(texto, return_tensors="pt", truncation=True, padding=True)
-    with torch.no_grad():
-        logits = topic_model(**inputs).logits
-        probs = torch.softmax(logits, dim=1)
-    predicted_class_id = logits.argmax().item()
-    confidence = probs[0, predicted_class_id].item()
-    label = topic_model.config.id2label[predicted_class_id]
-    return label, confidence
+    result = run_topic_classification(texto)
+    # HuggingFace API returns a list of dicts with 'label' and 'score'
+    if isinstance(result, list) and len(result) > 0:
+        label = result[0]['label']
+        confidence = result[0]['score']
+        return label, confidence
+    elif isinstance(result, dict) and 'label' in result:
+        return result['label'], result.get('score', 1.0)
+    return 'LABEL_0', 0.0
 
 def classificar_urgencia(texto):
-    inputs = urgency_tokenizer(texto, return_tensors="pt", truncation=True, padding=True)
-    with torch.no_grad():
-        logits = urgency_model(**inputs).logits
-        probs = torch.softmax(logits, dim=1)
-    predicted_class_id = logits.argmax().item()
-    confidence = probs[0, predicted_class_id].item()
-    label = urgency_model.config.id2label[predicted_class_id]
-    probas = {urgency_model.config.id2label[i]: float(probs[0, i].item()) for i in range(probs.shape[1])}
-    return label, probas
+    result = run_urgency_classification(texto)
+    # HuggingFace API returns a list of dicts with 'label' and 'score'
+    if isinstance(result, list) and len(result) > 0:
+        label = result[0]['label']
+        probas = {r['label']: r['score'] for r in result}
+        return label, probas
+    elif isinstance(result, dict) and 'label' in result:
+        return result['label'], {result['label']: result.get('score', 1.0)}
+    return 'LABEL_0', {}
 
 def normalize_address(addr):
     addr = addr.lower()
@@ -440,29 +490,6 @@ with tab1:
 with tab2:
     st.header("📍 Analisador Inteligente de Queixas Urbanas")
     st.write("Analisa queixas de cidadãos: deteta tópicos, urgência e extrai localizações.")
-
-    def extract_addresses(text):
-        # Extract entities from the NER pipeline
-
-        entities = ner_pipeline(text)
-        extracted_addresses = []
-
-        # Extract postal codes in the format 2560-374
-        import re
-        postal_codes = re.findall(r'\b\d{4}-\d{3}\b', text)
-        extracted_addresses.extend(postal_codes)
-
-        for entity in entities:
-            if entity['entity_group'] in ['Local', 'ORG', 'PER']:
-                extracted_addresses.append(entity['word'])
-
-        # Also extract with spaCy for LOC and GPE
-        doc = nlp(text)
-        spacy_addresses = [ent.text for ent in doc.ents if ent.label_ in ["LOC", "GPE"]]
-
-        # Combine all extracted addresses, removing duplicates
-        all_extracted = list(set(extracted_addresses + spacy_addresses))
-        return all_extracted
 
     # Interface do analisador
     text_input = st.text_area("Cole aqui a queixa de um cidadão:", height=200, 
