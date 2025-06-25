@@ -40,12 +40,12 @@ load_dotenv()
 
 # Load spaCy
 try:
-    nlp = spacy.load("pt_core_news_lg")
+    nlp = spacy.load("pt_core_news_sm")
 except OSError:
     # Download the model if not present
     import spacy.cli
-    spacy.cli.download("pt_core_news_lg")
-    nlp = spacy.load("pt_core_news_lg")
+    spacy.cli.download("pt_core_news_sm")
+    nlp = spacy.load("pt_core_news_sm")
 
 # Load NER model with explicit device mapping
 ner_pipeline = pipeline(
