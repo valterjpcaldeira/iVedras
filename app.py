@@ -132,20 +132,6 @@ def get_coordinates(location, city="Torres Vedras", country="Portugal"):
     # Fallback to OpenCage
     return get_coordinates_from_opencage(location, city, country)
 
-def get_coordinates_from_csv(location):
-    if addresses_df is not None:
-        best_match, lat, lon = match_address(location,55)
-        if isinstance(lat, str):
-            lat = lat.replace('GPS: ','')
-        if best_match is not None and lat is not None and lon is not None:
-            try:
-                lat_f = float(lat)
-                lon_f = float(lon)
-            except Exception:
-                lat_f, lon_f = lat, lon
-            return lat_f, lon_f, best_match
-    return None, None, None
-
 def get_coordinates_from_opencage(location, city="Torres Vedras", country="Portugal"):
     key = os.getenv("OPENCAGE_API_KEY")
     if not key:
@@ -450,16 +436,16 @@ with tab2:
                 lon = None
 
                 if address_data:
-                    # Try each extracted address in CSV first
+                    # Try each extracted address in MongoDB/Geocoding
                     for address in address_data:
-                        lat, lon, adresse_extracted = get_coordinates_from_csv(address)
+                        lat, lon, adresse_extracted = get_coordinates(address)
                         if lat is not None and lon is not None:
                             found = True
                             break
-                    # If not found in CSV, try combined address in CSV
+                    # If not found, try combined address
                     if not found:
                         combined_address = " ".join(address_data)
-                        lat, lon, adresse_extracted = get_coordinates_from_csv(combined_address)
+                        lat, lon, adresse_extracted = get_coordinates(combined_address)
                         if lat is not None and lon is not None:
                             found = True
 
