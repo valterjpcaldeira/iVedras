@@ -64,7 +64,7 @@ def run_topic_classification(text):
     response = requests.post(
         FLY_API_URL,
         json={"text": text},
-        timeout=10
+        timeout=60
     )
     response.raise_for_status()
     return response.json()
