@@ -9,7 +9,7 @@ import os
 from dotenv import load_dotenv
 from fuzzywuzzy import fuzz
 import pydeck as pdk
-from rapidfuzz import process, fuzz as rapidfuzz_fuzz
+from rapidfuzz import process, fuzz as rapidfuzz_fuzz, fuzz as rapidfuzz_fuzz_ratio
 import requests
 
 
@@ -101,33 +101,35 @@ def normalize_address(addr):
     addr = re.sub(r'\s+', ' ', addr).strip()  # remove excess whitespace
     return addr
 
-def get_address_from_mongodb(normalized_address):
+def get_address_from_mongodb(normalized_address, threshold=60):
+    from rapidfuzz import fuzz
     client = get_mongodb_client()
     if client:
         try:
             db = client['complaints_db']
             collection = db['addresses']
-            # Try to find the address by normalized_address
-            address_doc = collection.find_one({'normalized_address': normalized_address})
-            if address_doc:
-                return address_doc['address'], address_doc['latitude'], address_doc['longitude']
+            address_docs = list(collection.find({}))
+            best_score = 0
+            best_doc = None
+            for doc in address_docs:
+                db_norm = doc.get('normalized_address', '')
+                score = fuzz.ratio(normalized_address, db_norm)
+                if score > best_score:
+                    best_score = score
+                    best_doc = doc
+            if best_doc and best_score >= threshold:
+                return best_doc['address'], best_doc['latitude'], best_doc['longitude'], best_score
         except Exception as e:
             st.error(f"Erro ao obter morada da base de dados MongoDB: {str(e)}")
         finally:
             client.close()
-    return None, None, None
-
-def match_address(location, threshold=80):
-    # Normalize the address
-    normalized = normalize_address(location)
-    # Try to get the address from MongoDB
-    return get_address_from_mongodb(normalized)
+    return None, None, None, 0
 
 def get_coordinates(location, city="Torres Vedras", country="Portugal"):
-    address, lat, lon = match_address(location)
+    address, lat, lon, score = get_address_from_mongodb(normalize_address(location))
     if lat is not None and lon is not None:
-        return lat, lon, address
-    return None, None, None
+        return lat, lon, address, score
+    return None, None, None, 0
 
 def get_mongodb_client():
     try:
@@ -410,23 +412,24 @@ with tab2:
 
                 # Get coordinates and verify location
                 found = False
-                adresse_extracted = None
-                lat = None
-                lon = None
-
+                best_score = 0
+                best_lat, best_lon, best_address = None, None, None
                 if address_data:
                     for address in address_data:
-                        lat, lon, adresse_extracted = get_coordinates(address)
-                        if lat is not None and lon is not None:
-                            found = True
-                            break
-                    if not found:
-                        combined_address = " ".join(address_data)
-                        lat, lon, adresse_extracted = get_coordinates(combined_address)
-                        if lat is not None and lon is not None:
-                            found = True
-
-                    if not found or lat is None or lon is None:
+                        lat, lon, adresse_extracted, score = get_coordinates(address)
+                        if score > best_score:
+                            best_score = score
+                            best_lat, best_lon, best_address = lat, lon, adresse_extracted
+                    # Optionally, try the combined address as well
+                    combined_address = " ".join(address_data)
+                    lat, lon, adresse_extracted, score = get_coordinates(combined_address)
+                    if score > best_score:
+                        best_score = score
+                        best_lat, best_lon, best_address = lat, lon, adresse_extracted
+                    if best_score >= 60 and best_lat is not None and best_lon is not None:
+                        found = True
+                        lat, lon, adresse_extracted = best_lat, best_lon, best_address
+                    else:
                         error_message = "❌ A morada tem de ser Torres Vedras, tente outra vez."
                         error_flag = True
                 else:
