@@ -1,28 +1,18 @@
 import streamlit as st
 import pandas as pd
-import folium
-from streamlit_folium import st_folium
 import plotly.express as px
 import spacy
-from transformers import pipeline, AutoTokenizer, AutoModelForTokenClassification, AutoModelForSequenceClassification
-from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut, GeocoderQuotaExceeded
-import time
+from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
 import re
 import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import Pipeline
 from pymongo import MongoClient
 from datetime import datetime
 import os
 from dotenv import load_dotenv
 import torch
 from fuzzywuzzy import fuzz
-from folium.plugins import HeatMap
 import pydeck as pdk
 from opencage.geocoder import OpenCageGeocode
-from difflib import SequenceMatcher
 from rapidfuzz import process, fuzz as rapidfuzz_fuzz
 
 
