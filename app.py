@@ -9,7 +9,6 @@ import os
 from dotenv import load_dotenv
 from fuzzywuzzy import fuzz
 import pydeck as pdk
-from opencage.geocoder import OpenCageGeocode
 from rapidfuzz import process, fuzz as rapidfuzz_fuzz
 import requests
 
@@ -125,30 +124,10 @@ def match_address(location, threshold=80):
     return get_address_from_mongodb(normalized)
 
 def get_coordinates(location, city="Torres Vedras", country="Portugal"):
-    # Try to get coordinates from MongoDB
     address, lat, lon = match_address(location)
     if lat is not None and lon is not None:
         return lat, lon, address
-    # Fallback to OpenCage
-    return get_coordinates_from_opencage(location, city, country)
-
-def get_coordinates_from_opencage(location, city="Torres Vedras", country="Portugal"):
-    key = os.getenv("OPENCAGE_API_KEY")
-    if not key:
-        raise ValueError("OpenCage API key not found. Please set OPENCAGE_API_KEY in your .env file.")
-    geocoder = OpenCageGeocode(key)
-    full_location = f"{location}, {city}, {country}"
-    try:
-        results = geocoder.geocode(full_location, no_annotations='1', limit=1, language='pt')
-        if results and len(results):
-            lat = results[0]['geometry']['lat']
-            lon = results[0]['geometry']['lng']
-            address_name = results[0]['formatted']
-            return lat, lon, address_name
-        else:
-            return None, None, None
-    except Exception:
-        return None, None, None
+    return None, None, None
 
 def get_mongodb_client():
     try:
@@ -436,13 +415,11 @@ with tab2:
                 lon = None
 
                 if address_data:
-                    # Try each extracted address in MongoDB/Geocoding
                     for address in address_data:
                         lat, lon, adresse_extracted = get_coordinates(address)
                         if lat is not None and lon is not None:
                             found = True
                             break
-                    # If not found, try combined address
                     if not found:
                         combined_address = " ".join(address_data)
                         lat, lon, adresse_extracted = get_coordinates(combined_address)
@@ -450,7 +427,7 @@ with tab2:
                             found = True
 
                     if not found or lat is None or lon is None:
-                        error_message = "❌ Não foi possível obter morada na mensagem. Por favor, forneça um endereço válido em Torres Vedras, adicione o codigo postal."
+                        error_message = "❌ A morada tem de ser Torres Vedras, tente outra vez."
                         error_flag = True
                 else:
                     error_message = "❌ Não foi possível obter morada na mensagem. Por favor, forneça um endereço válido em Torres Vedras, adicione o codigo postal."
