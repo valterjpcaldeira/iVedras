@@ -101,14 +101,25 @@ def normalize_address(addr):
     addr = re.sub(r'\s+', ' ', addr).strip()  # remove excess whitespace
     return addr
 
-def get_address_from_mongodb(normalized_address, threshold=60):
+def get_address_from_mongodb(normalized_address, threshold=40):
     from rapidfuzz import fuzz
+    import re
     client = get_mongodb_client()
     if client:
         try:
             db = client['complaints_db']
             collection = db['addresses']
             address_docs = list(collection.find({}))
+            # Check for format1 '2560046' (7 digits, no dash)
+            match = re.search(r'\b\d{7}\b', normalized_address)
+            if match:
+                code = match.group(0)
+                for doc in address_docs:
+                    address_str = doc.get('address', '')
+                    if code in address_str:
+                        # Found exact match in address string
+                        return doc['address'], doc['latitude'], doc['longitude'], 100
+            # Fallback to fuzzy matching
             best_score = 0
             best_doc = None
             for doc in address_docs:
@@ -409,6 +420,7 @@ with tab2:
             with st.spinner("A analisar..."):
                 # Localização (NER with BERTimbau)
                 address_data = extract_addresses(text_input)
+                print(address_data)
 
                 # Get coordinates and verify location
                 found = False
@@ -426,7 +438,7 @@ with tab2:
                     if score > best_score:
                         best_score = score
                         best_lat, best_lon, best_address = lat, lon, adresse_extracted
-                    if best_score >= 60 and best_lat is not None and best_lon is not None:
+                    if best_score >= 30 and best_lat is not None and best_lon is not None:
                         found = True
                         lat, lon, adresse_extracted = best_lat, best_lon, best_address
                     else:
