@@ -26,56 +26,6 @@ load_dotenv()
 # Initialize models
 # print("Loading models...")
 
-# Carregar modelo, tokenizer e LabelEncoder para classificação de tópicos
-TOPIC_MODEL_PATH = "valterjpcaldeira/iVedrasQueixas"
-TOPIC_ENCODER_PATH = "valterjpcaldeira/iVedrasQueixas"
-topic_model = AutoModelForSequenceClassification.from_pretrained(
-    TOPIC_MODEL_PATH,
-    local_files_only=False,
-    force_download=False
-)
-topic_tokenizer = AutoTokenizer.from_pretrained(
-    TOPIC_MODEL_PATH,
-    local_files_only=False,
-    force_download=False
-)
-
-# Carregar modelo, tokenizer e LabelEncoder para classificação de urgência
-URGENCY_MODEL_PATH = "valterjpcaldeira/iVedrasUrgencia"
-URGENCY_ENCODER_PATH = "valterjpcaldeira/iVedrasUrgencia"
-urgency_model = AutoModelForSequenceClassification.from_pretrained(
-    URGENCY_MODEL_PATH,
-    local_files_only=False,
-    force_download=False
-)
-urgency_tokenizer = AutoTokenizer.from_pretrained(
-    URGENCY_MODEL_PATH,
-    local_files_only=False,
-    force_download=False
-)
-
-# Map model labels to human-readable urgency names
-URGENCY_LABEL_MAP = {
-    "LABEL_0": "Baixa",
-    "LABEL_1": "Alta",
-    "LABEL_2": "Média",
-    "LABEL_3": "Baixa"
-}
-
-# Map model labels to human-readable topic names
-TOPIC_LABEL_MAP = {
-    "LABEL_9": "Limpeza e Resíduos",
-    "LABEL_8": "Infraestruturas e Obras",
-    "LABEL_7": "Trânsito e Mobilidade",
-    "LABEL_6": "Áreas Verdes e Espaços Públicos",
-    "LABEL_5": "Água e Saneamento",
-    "LABEL_4": "Animais e Ambiente",
-    "LABEL_3": "Serviços Sociais e Comunitários",
-    "LABEL_2": "Segurança e Ordem Pública",
-    "LABEL_1": "Comércio e Atividades Económicas",
-    "LABEL_0": "Outros"
-}
-
 # HuggingFace Inference API setup
 HF_API_TOKEN = os.getenv("HF_API_TOKEN")
 HF_HEADERS = {"Authorization": f"Bearer {HF_API_TOKEN}"}
