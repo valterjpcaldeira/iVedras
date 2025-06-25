@@ -39,27 +39,50 @@ load_dotenv()
 # print("Loading models...")
 
 # Load spaCy
-nlp = spacy.load("pt_core_news_lg")
+try:
+    nlp = spacy.load("pt_core_news_lg")
+except OSError:
+    # Download the model if not present
+    import spacy.cli
+    spacy.cli.download("pt_core_news_lg")
+    nlp = spacy.load("pt_core_news_lg")
 
 # Load NER model with explicit device mapping
 ner_pipeline = pipeline(
     "ner",
     model="lfcc/bert-portuguese-ner",
     aggregation_strategy="simple",
-    device=-1  # Force CPU usage
+    device=-1,  # Force CPU usage
+    local_files_only=False
 )
 
 # Carregar modelo, tokenizer e LabelEncoder para classificação de tópicos
 TOPIC_MODEL_PATH = "valterjpcaldeira/iVedrasQueixas"
 TOPIC_ENCODER_PATH = "valterjpcaldeira/iVedrasQueixas"
-topic_model = AutoModelForSequenceClassification.from_pretrained(TOPIC_MODEL_PATH)
-topic_tokenizer = AutoTokenizer.from_pretrained(TOPIC_MODEL_PATH)
+topic_model = AutoModelForSequenceClassification.from_pretrained(
+    TOPIC_MODEL_PATH,
+    local_files_only=False,
+    force_download=False
+)
+topic_tokenizer = AutoTokenizer.from_pretrained(
+    TOPIC_MODEL_PATH,
+    local_files_only=False,
+    force_download=False
+)
 
 # Carregar modelo, tokenizer e LabelEncoder para classificação de urgência
 URGENCY_MODEL_PATH = "valterjpcaldeira/iVedrasUrgencia"
 URGENCY_ENCODER_PATH = "valterjpcaldeira/iVedrasUrgencia"
-urgency_model = AutoModelForSequenceClassification.from_pretrained(URGENCY_MODEL_PATH)
-urgency_tokenizer = AutoTokenizer.from_pretrained(URGENCY_MODEL_PATH)
+urgency_model = AutoModelForSequenceClassification.from_pretrained(
+    URGENCY_MODEL_PATH,
+    local_files_only=False,
+    force_download=False
+)
+urgency_tokenizer = AutoTokenizer.from_pretrained(
+    URGENCY_MODEL_PATH,
+    local_files_only=False,
+    force_download=False
+)
 
 # Map model labels to human-readable urgency names
 URGENCY_LABEL_MAP = {
@@ -235,11 +258,16 @@ def get_coordinates(location, city="Torres Vedras", country="Portugal"):
 
 def get_mongodb_client():
     try:
-        uri = st.secrets["MONGODB_URI"]
+        uri = os.getenv("MONGODB_URI")
+        if not uri:
+            st.error("MongoDB URI not found in environment variables")
+            return None
         client = MongoClient(uri)
+        # Test the connection
+        client.admin.command('ping')
         return client
     except Exception as e:
-        st.error(f"Erro ao ligar à base de dados MongoDB: {str(e)}")
+        st.error(f"Error connecting to MongoDB Atlas: {str(e)}")
         return None
 
 def save_complaint_to_mongodb(complaint_data):
