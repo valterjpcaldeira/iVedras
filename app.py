@@ -1,15 +1,12 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import spacy
-from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
 import re
 import numpy as np
 from pymongo import MongoClient
 from datetime import datetime
 import os
 from dotenv import load_dotenv
-import torch
 from fuzzywuzzy import fuzz
 import pydeck as pdk
 from opencage.geocoder import OpenCageGeocode
