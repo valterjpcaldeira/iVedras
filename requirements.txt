@@ -33,3 +33,6 @@ opencage>=2.2.0 # For OpenCageGeocode
 # tqdm  # If you use progress bars
 
 blis==0.7.11
+
+transformers
+torch
