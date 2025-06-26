@@ -87,6 +87,14 @@ def run_urgency_classification(text):
         score = probs[0, pred].item()
     return {"label_id": pred, "confidence": score}
 
+# NER API call (Hugging Face Inference API)
+def run_ner(text):
+    model_id = "lfcc/bert-portuguese-ner"
+    api_url = f"https://api-inference.huggingface.co/models/{model_id}"
+    response = requests.post(api_url, headers=HF_HEADERS, json={"inputs": text})
+    response.raise_for_status()
+    return response.json()
+
 def extract_addresses(text):
     entities = run_ner(text)
     extracted_addresses = []
