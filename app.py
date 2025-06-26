@@ -34,24 +34,22 @@ HF_HEADERS = {"Authorization": f"Bearer {HF_API_TOKEN}"}
 FLY_API_URL = "https://ivedras-topic-api.fly.dev/predict"
 
 TOPIC_LABELS = [
-    "Limpeza e Resíduos",
-    "Infraestruturas e Obras",
-    "Trânsito e Mobilidade",
-    "Áreas Verdes e Espaços Públicos",
-    "Água e Saneamento",
-    "Animais e Ambiente",
-    "Serviços Sociais e Comunitários",
-    "Segurança e Ordem Pública",
+    "Outros",
     "Comércio e Atividades Económicas",
-    "Outros"
+    "Segurança e Ordem Pública",
+    "Serviços Sociais e Comunitários",
+    "Animais e Ambiente",
+    "Água e Saneamento",
+    "Áreas Verdes e Espaços Públicos",
+    "Trânsito e Mobilidade",
+    "Infraestruturas e Obras",
+    "Limpeza e Resíduos"
 ]
 
 # Add this mapping at the top, after TOPIC_LABELS
 URGENCY_LABELS = ["Alta", "Média", "Baixa"]
 URGENCY_LABEL_MAP = {0: "Alta", 1: "Média", 2: "Baixa", "LABEL_0": "Alta", "LABEL_1": "Média", "LABEL_2": "Baixa", "alta": "Alta", "media": "Média", "baixa": "Baixa"}
 
-# Update the urgency API URL
-iVEDRAS_URGENCY_API_URL = "https://ivedras-urgency-api.fly.dev/predict"
 
 # After TOPIC_LABELS
 TOPIC_LABEL_MAP = {label: label for label in TOPIC_LABELS}
