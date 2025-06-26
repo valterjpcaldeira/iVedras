@@ -11,6 +11,8 @@ from fuzzywuzzy import fuzz
 import pydeck as pdk
 from rapidfuzz import process, fuzz as rapidfuzz_fuzz, fuzz as rapidfuzz_fuzz_ratio
 import requests
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
+import torch
 
 
 
@@ -54,35 +56,36 @@ iVEDRAS_URGENCY_API_URL = "https://ivedras-urgency-api.fly.dev/predict"
 # After TOPIC_LABELS
 TOPIC_LABEL_MAP = {label: label for label in TOPIC_LABELS}
 
-# NER API call
-def run_ner(text):
-    model_id = "lfcc/bert-portuguese-ner"
-    api_url = f"https://api-inference.huggingface.co/models/{model_id}"
-    response = requests.post(api_url, headers=HF_HEADERS, json={"inputs": text})
-    response.raise_for_status()
-    return response.json()
+# Load topic and urgency models/tokenizers at startup
+TOPIC_MODEL_REPO = "valterjpcaldeira/iVedrasQueixas"  # Change to your actual repo if different
+URGENCY_MODEL_REPO = "valterjpcaldeira/iVedrasUrgencia"
+HF_TOKEN = os.getenv("HF_API_TOKEN")  # Optional, for private models
 
-# Topic classification API call
+topic_model = AutoModelForSequenceClassification.from_pretrained(TOPIC_MODEL_REPO, use_auth_token=HF_TOKEN)
+topic_tokenizer = AutoTokenizer.from_pretrained(TOPIC_MODEL_REPO, use_auth_token=HF_TOKEN)
+
+urgency_model = AutoModelForSequenceClassification.from_pretrained(URGENCY_MODEL_REPO, use_auth_token=HF_TOKEN)
+urgency_tokenizer = AutoTokenizer.from_pretrained(URGENCY_MODEL_REPO, use_auth_token=HF_TOKEN)
+
+# Topic classification local inference
 def run_topic_classification(text):
-    try:
-        response = requests.post(
-            FLY_API_URL,
-            json={"text": text},
-            timeout=120
-        )
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        print("Request failed:", e)
-        if hasattr(e, 'response') and e.response is not None:
-            print("Response content:", e.response.text)
-        raise
+    inputs = topic_tokenizer(text, return_tensors="pt", truncation=True, padding=True)
+    with torch.no_grad():
+        logits = topic_model(**inputs).logits
+        probs = torch.softmax(logits, dim=1)
+        pred = torch.argmax(probs, dim=1).item()
+        score = probs[0, pred].item()
+    return {"label_id": pred, "confidence": score}
 
-# Urgency classification API call
+# Urgency classification local inference
 def run_urgency_classification(text):
-    response = requests.post(iVEDRAS_URGENCY_API_URL, json={"text": text}, timeout=120)
-    response.raise_for_status()
-    return response.json()
+    inputs = urgency_tokenizer(text, return_tensors="pt", truncation=True, padding=True)
+    with torch.no_grad():
+        logits = urgency_model(**inputs).logits
+        probs = torch.softmax(logits, dim=1)
+        pred = torch.argmax(probs, dim=1).item()
+        score = probs[0, pred].item()
+    return {"label_id": pred, "confidence": score}
 
 def extract_addresses(text):
     entities = run_ner(text)
