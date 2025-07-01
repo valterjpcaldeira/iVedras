@@ -173,6 +173,11 @@ def create_complaint(complaint: ComplaintIn):
     # Return the stored complaint (with string _id and iso timestamp)
     return complaint_to_dict(data)
 
+@app.on_event("startup")
+def log_port():
+    port = int(os.environ.get("PORT", 8000))
+    logger.info(f"FastAPI running on port {port}")
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     logger.info(f"Starting Uvicorn on port {port}")
