@@ -60,7 +60,8 @@ training_args = TrainingArguments(
     learning_rate=2e-5,
     per_device_train_batch_size=4,
     per_device_eval_batch_size=4,
-    num_train_epochs=8,
+    eval_strategy="epoch",  # Evaluate at the end of each epoch
+    save_strategy="epoch",  # Save at the end of each epoch
     weight_decay=0.01,
     save_total_limit=1,
 )

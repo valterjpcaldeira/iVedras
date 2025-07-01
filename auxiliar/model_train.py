@@ -143,6 +143,11 @@ df = pd.DataFrame(data)
 le = LabelEncoder()
 df["label_id"] = le.fit_transform(df["label"])
 
+# Save label mapping to a text file
+with open("iVedras_label_mapping.txt", "w", encoding="utf-8") as f:
+    for idx, label in enumerate(le.classes_):
+        f.write(f"{idx}: {label}\n")
+
 # 2. Criar dataset Hugging Face
 dataset = Dataset.from_pandas(df[["text", "label_id"]].rename(columns={"label_id": "labels"}))
 dataset = dataset.train_test_split(test_size=0.2)
@@ -163,12 +168,16 @@ model = AutoModelForSequenceClassification.from_pretrained(model_name, num_label
 # 5. Treinamento
 training_args = TrainingArguments(
     output_dir="output",
-    learning_rate=2e-5,
-    per_device_train_batch_size=8,
-    per_device_eval_batch_size=8,
-    num_train_epochs=4,
-    weight_decay=0.01,
-    save_total_limit=1,
+    learning_rate=1e-5,  # Lower learning rate for better convergence
+    per_device_train_batch_size=4,  # Smaller batch size can help generalization
+    per_device_eval_batch_size=4,
+    num_train_epochs=10,  # More epochs for better learning
+    weight_decay=0.05,  # Slightly higher weight decay to reduce overfitting
+    save_total_limit=2,
+    eval_strategy="epoch",  # Evaluate at the end of each epoch
+    save_strategy="epoch",  # Save at the end of each epoch
+    load_best_model_at_end=True,  # Load best model according to eval loss
+    metric_for_best_model="eval_loss",
 )
 
 trainer = Trainer(
