@@ -172,3 +172,9 @@ def create_complaint(complaint: ComplaintIn):
     data["_id"] = str(result.inserted_id)
     # Return the stored complaint (with string _id and iso timestamp)
     return complaint_to_dict(data)
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))
+    logger.info(f"Starting Uvicorn on port {port}")
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
