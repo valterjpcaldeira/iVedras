@@ -9,7 +9,6 @@ secrets.toml
 /converted_model
 /ivedras_topic_api
 generate_pytorch_model_bin.py
-main.py
 /ivedras_urgency_api
 /ivedras-app/backend/__pycache__
 /ivedras-app/backend/venv
