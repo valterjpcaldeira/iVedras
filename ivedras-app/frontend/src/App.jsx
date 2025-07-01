@@ -8,7 +8,7 @@ import Header from './components/Header';
 
 function App() {
   return (
-    <div style={{ minHeight: '100vh', background: '#c4eafa' }}>
+    <div style={{ minHeight: '100vh', background: '#fff' }}>
       <Router>
         <Header />
         <Routes>
