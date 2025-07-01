@@ -1,6 +1,6 @@
 # 🤖 iVedras – Iniciativa Torres Vedras - AI Demo for Torres Vedras
 
-Welcome to **Torres sem Máscara**!  
+Welcome to **iVedras**!  
 This is a demo project showing how Artificial Intelligence can help the city of Torres Vedras by empowering citizens to report and track urban issues easily.
 
 ✨ **All AI models were developed by me and are 100% free for everyone to use!**

@@ -49,6 +49,7 @@ function Home() {
   return (
     <div style={{ padding: '3.5rem 0', maxWidth: 700, margin: '0 auto', width: '100%' }}>
       <div style={{ textAlign: 'center', marginBottom: '2.5rem', padding: '0 0.5em' }}>
+        <img src="/iVedras.png" alt="iVedras logo" style={{ width: '90px', height: '90px', objectFit: 'contain', marginBottom: '1.2rem', filter: 'drop-shadow(0 2px 12px #00aae933)' }} />
         <h1 style={{ fontWeight: 800, fontSize: '2.2em', color: '#00aae9', marginBottom: 0, lineHeight: 1.1 }}>iVedras</h1>
         <div style={{ color: '#1a2a36', fontSize: '1em', marginBottom: '1.2em', fontWeight: 400 }}>Bem-vindo ao portal de queixas de Torres Vedras</div>
         <div style={{ margin: '0.5em 0 0.5em 0', fontSize: '1em', display: 'flex', justifyContent: 'center', gap: 12 }}>
