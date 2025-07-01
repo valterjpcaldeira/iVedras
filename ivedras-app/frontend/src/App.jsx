@@ -4,13 +4,11 @@ import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import ComplaintWizard from './pages/ComplaintWizard';
 import 'leaflet/dist/leaflet.css';
-import Header from './components/Header';
 
 function App() {
   return (
     <div style={{ minHeight: '100vh', background: '#fff' }}>
       <Router>
-        <Header />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/dashboard" element={<Dashboard />} />
