@@ -4,4 +4,4 @@ pymongo
 python-dotenv
 transformers
 torch
-scikit-learn 
+scikit-learn
