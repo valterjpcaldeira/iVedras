@@ -12,3 +12,7 @@ generate_pytorch_model_bin.py
 /ivedras_urgency_api
 /ivedras-app/backend/__pycache__
 /ivedras-app/backend/venv
+
+# Model artifacts
+/iVedras_queixas/
+/iVedras_urgencia/
