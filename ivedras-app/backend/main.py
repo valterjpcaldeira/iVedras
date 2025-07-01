@@ -6,6 +6,7 @@ from pymongo import MongoClient
 from datetime import datetime
 import os
 from dotenv import load_dotenv
+import logging
 
 # HuggingFace imports
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
@@ -14,11 +15,23 @@ import torch
 # Load environment variables
 load_dotenv()
 
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # MongoDB setup
-MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017/")
-client = MongoClient(MONGODB_URI)
-db = client["complaints_db"]
-complaints_collection = db["complaints"]
+try:
+    MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017/")
+    client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
+    # Trigger a server selection to check connection
+    client.server_info()
+    db = client["complaints_db"]
+    complaints_collection = db["complaints"]
+    logger.info("Connected to MongoDB at %s", MONGODB_URI)
+except Exception as e:
+    logger.error(f"Failed to connect to MongoDB: {e}")
+    import sys
+    sys.exit(1)
 
 # FastAPI app
 app = FastAPI()
@@ -63,25 +76,30 @@ URGENCY_MODEL_REPO = os.getenv("URGENCY_MODEL_REPO", "valterjpcaldeira/iVedrasUr
 HF_TOKEN = os.getenv("HF_API_TOKEN")
 
 print("Loading HuggingFace models...")
-topic_model = AutoModelForSequenceClassification.from_pretrained(
-    TOPIC_MODEL_REPO,
-    use_auth_token=HF_TOKEN,
-    torch_dtype=torch.float32
-)
-topic_tokenizer = AutoTokenizer.from_pretrained(
-    TOPIC_MODEL_REPO,
-    use_auth_token=HF_TOKEN
-)
-urgency_model = AutoModelForSequenceClassification.from_pretrained(
-    URGENCY_MODEL_REPO,
-    use_auth_token=HF_TOKEN,
-    torch_dtype=torch.float32
-)
-urgency_tokenizer = AutoTokenizer.from_pretrained(
-    URGENCY_MODEL_REPO,
-    use_auth_token=HF_TOKEN
-)
-print("Models loaded.")
+try:
+    topic_model = AutoModelForSequenceClassification.from_pretrained(
+        TOPIC_MODEL_REPO,
+        use_auth_token=HF_TOKEN,
+        torch_dtype=torch.float32
+    )
+    topic_tokenizer = AutoTokenizer.from_pretrained(
+        TOPIC_MODEL_REPO,
+        use_auth_token=HF_TOKEN
+    )
+    urgency_model = AutoModelForSequenceClassification.from_pretrained(
+        URGENCY_MODEL_REPO,
+        use_auth_token=HF_TOKEN,
+        torch_dtype=torch.float32
+    )
+    urgency_tokenizer = AutoTokenizer.from_pretrained(
+        URGENCY_MODEL_REPO,
+        use_auth_token=HF_TOKEN
+    )
+    logger.info("HuggingFace models loaded successfully.")
+except Exception as e:
+    logger.error(f"Failed to load HuggingFace models: {e}")
+    import sys
+    sys.exit(1)
 
 TOPIC_LABELS = [
     "Animais e Ambiente",
@@ -96,6 +114,10 @@ TOPIC_LABELS = [
     "Áreas Verdes e Espaços Públicos"
 ]
 URGENCY_LABELS = ["Não Urgente", "Urgente"]
+
+@app.get("/")
+def read_root():
+    return {"status": "ok"}
 
 # --- Classification endpoint ---
 @app.post("/classify", response_model=ClassifyResponse)

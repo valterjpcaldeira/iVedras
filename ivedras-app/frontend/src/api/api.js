@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:8000'; // Change if backend runs elsewhere
+const BASE_URL = 'http://web-production-830b1.up.railway.app'; // Change if backend runs elsewhere
 
 export async function getComplaints() {
   const res = await fetch(`${BASE_URL}/complaints`);
