@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 # MongoDB setup
 try:
     MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017/")
+    
     client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
     # Trigger a server selection to check connection
     client.server_info()
