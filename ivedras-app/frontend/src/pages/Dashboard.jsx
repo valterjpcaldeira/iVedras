@@ -330,6 +330,17 @@ function Dashboard() {
       </div>
       <div className="card" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,170,233,0.10)', padding: '1.2em 1em', width: '100%', maxWidth: '100vw' }}>
         <h3 style={{ color: '#00aae9', fontWeight: 700, fontSize: '1.1em', marginBottom: 18 }}>Pedidos Não Resolvidos (ordenados por votos)</h3>
+        <div style={{ maxWidth: 500, margin: '0 auto 2em auto', height: 220 }}>
+          <div style={{ textAlign: 'center', color: '#7a8ca3', fontSize: '0.98em', marginBottom: 4 }}>
+            Estado dos pedidos (últimos 6 meses)
+          </div>
+          <Bar data={barStatusChartData} options={{
+            plugins: { legend: { display: false } },
+            scales: { x: { grid: { display: false }, ticks: { color: '#7a8ca3' } }, y: { beginAtZero: true, grid: { color: '#e3eaf2' } } },
+            responsive: true,
+            maintainAspectRatio: false,
+          }} height={180} />
+        </div>
         <div style={{ overflowX: 'auto', borderRadius: 12, boxShadow: '0 2px 12px #00aae911', marginBottom: 16 }}>
           <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, fontSize: '1em', wordBreak: 'break-word', background: '#f7fbfd', borderRadius: 12, overflow: 'hidden' }}>
             <thead>
@@ -359,18 +370,6 @@ function Dashboard() {
           <span style={{ fontWeight: 600, color: '#00aae9' }}>{page} / {Math.ceil(sortedNotSolved.length / pageSize)}</span>
           <button onClick={() => setPage(p => Math.min(Math.ceil(sortedNotSolved.length / pageSize), p + 1))} disabled={page === Math.ceil(sortedNotSolved.length / pageSize)}>Próxima</button>
         </div>
-      </div>
-      <div style={{ maxWidth: 500, margin: '0 auto 2em auto' }}>
-        <div style={{ textAlign: 'center', color: '#7a8ca3', fontSize: '0.98em', marginBottom: 4 }}>
-          Estado dos pedidos (últimos 6 meses)
-        </div>
-        <Bar data={barStatusChartData} options={{
-          plugins: { legend: { display: false } },
-          scales: { x: { grid: { display: false }, ticks: { color: '#7a8ca3' } }, y: { beginAtZero: true, grid: { color: '#e3eaf2' } } },
-          responsive: true,
-          maintainAspectRatio: false,
-          height: 180,
-        }} height={180} />
       </div>
     </div>
   );
