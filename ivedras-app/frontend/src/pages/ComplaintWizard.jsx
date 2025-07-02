@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { submitComplaint, classifyComplaint } from '../api/api';
 import { useNavigate } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 
 // Fix default marker icon for leaflet in React
@@ -24,6 +24,14 @@ function LocationMarker({ location, setLocation }) {
   return <Marker position={[location.lat, location.lng]} icon={markerIcon} />;
 }
 
+function RecenterMap({ location }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView([location.lat, location.lng]);
+  }, [location, map]);
+  return null;
+}
+
 function MapStep({ location, setLocation, setStep }) {
   return (
     <div style={{ marginBottom: '1.5rem' }}>
@@ -37,6 +45,7 @@ function MapStep({ location, setLocation, setStep }) {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        <RecenterMap location={location} />
         <LocationMarker location={location} setLocation={setLocation} />
       </MapContainer>
       <div style={{ marginTop: '1rem' }}>

@@ -163,13 +163,6 @@ function Dashboard() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <HeatmapLayer points={heatPoints} />
-          {zones.map((z, i) => (
-            <Marker key={i} position={[z.lat, z.lng]} icon={markerIcon}>
-              <Popup>
-                <b>{z.count} queixa(s) nesta zona</b>
-              </Popup>
-            </Marker>
-          ))}
         </MapContainer>
         <div style={{ marginTop: 8, textAlign: 'right', fontSize: '0.95em', color: '#0077a9', opacity: 0.8 }}>
           <span style={{ background: 'linear-gradient(90deg, #b2e0f7 0%, #00aae9 60%, #ff3b30 100%)', borderRadius: 8, padding: '0.2em 1.2em', marginRight: 8, display: 'inline-block', height: 12, verticalAlign: 'middle' }}></span>
