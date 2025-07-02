@@ -58,7 +58,9 @@ function Home() {
     setVoting(v => ({ ...v, [id]: true }));
     try {
       await voteComplaint(id);
-      setComplaints(cs => cs.map(c => c._id === id ? { ...c, votes: (c.votes || 0) + 1 } : c));
+      // Refetch complaints to get updated votes from backend
+      const data = await getComplaints();
+      setComplaints(data);
       const newVoted = { ...voted, [id]: true };
       setVoted(newVoted);
       localStorage.setItem('votedComplaints', JSON.stringify(newVoted));
