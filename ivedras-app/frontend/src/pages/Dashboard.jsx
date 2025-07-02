@@ -39,16 +39,16 @@ function HeatmapLayer({ points }) {
   useEffect(() => {
     if (!points.length) return;
     const heatLayer = L.heatLayer(points, {
-      radius: 38,
-      blur: 32,
+      radius: 48,
+      blur: 38,
       gradient: {
         0.0: 'rgba(0,0,0,0)',
-        0.5: '#b2e0f7',
-        0.7: '#00aae9',
-        0.9: '#0077a9',
-        1.0: '#ff3b30'
+        0.3: '#00aae9',
+        0.6: '#ffe066',
+        0.85: '#ff3b30',
+        1.0: '#d90429'
       },
-      minOpacity: 0.25,
+      minOpacity: 0.18,
       max: 1.0,
       maxZoom: 18,
     }).addTo(map);
@@ -94,7 +94,12 @@ function Dashboard() {
 
   // --- Heatmap by zone ---
   const zones = groupByZone(filteredComplaints, 2); // precision=2 ~ 1km
-  const heatPoints = zones.map(z => [z.lat, z.lng, z.count]);
+  const heatPoints = zones.map(z => {
+    // Find a complaint in this zone to get votes (approximate)
+    const complaintsInZone = filteredComplaints.filter(c => c.latitude && c.longitude && c.latitude.toFixed(2) == z.lat.toFixed(2) && c.longitude.toFixed(2) == z.lng.toFixed(2));
+    const votes = complaintsInZone.reduce((sum, c) => sum + (c.votes || 0), 0);
+    return [z.lat, z.lng, votes > 0 ? votes : z.count];
+  });
 
   // --- Charts ---
   // 1. Complaints over time (last 30 days)
