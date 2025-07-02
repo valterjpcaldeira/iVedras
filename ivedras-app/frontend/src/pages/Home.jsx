@@ -126,22 +126,27 @@ function Home() {
       {error && <p style={{ color: '#FF3B30', textAlign: 'center' }}>{error}</p>}
       {!loading && !error && (
         <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-          {recentComplaints.map((c, i) => (
-            <li key={i} style={{ marginBottom: '1.2rem', padding: '0 0.5em' }}>
-              <div style={{ fontWeight: 600, fontSize: '1em', color: '#1a2a36', marginBottom: 2 }}><span style={{ fontStyle: 'italic' }}>&quot;{c.problem}&quot;</span></div>
-              {c.topic && (<span style={{ color: '#00aae9', fontWeight: 500, fontSize: '0.95em' }}>Categoria: {c.topic}</span>)}
-              <span style={{ marginLeft: 8, fontSize: '0.85em', color: c.status === 'solved' ? '#2ecc40' : '#ff9800', fontWeight: 600, background: c.status === 'solved' ? '#e8f5e9' : '#fffbe6', borderRadius: 6, padding: '2px 8px' }}>{c.status === 'solved' ? 'Resolvido' : 'Pendente'}</span>
-              <span style={{ marginLeft: 8, fontSize: '0.85em', color: '#00aae9', fontWeight: 600 }}>
-                👍 {c.votes || 0}
-                {c.status !== 'solved' && (
-                  <button style={{ marginLeft: 6, fontSize: '0.9em', padding: '2px 10px' }} disabled={voting[c._id] || voted[c._id]} onClick={() => handleVote(c._id)}>
-                    {voted[c._id] ? 'Votado' : 'Votar'}
-                  </button>
-                )}
-              </span>
-              <div style={{ fontSize: '0.9em', color: '#7a8ca3', marginTop: 2 }}>{c.timestamp ? new Date(c.timestamp).toLocaleString() : ''}</div>
-            </li>
-          ))}
+          {recentComplaints.map((c, i) => {
+            let statusColor = '#7a8ca3', statusBg = '#f4f6fa';
+            if (c.status === 'Resolvido') { statusColor = '#2ecc40'; statusBg = '#e8f5e9'; }
+            else if (c.status === 'Em resolução') { statusColor = '#ffe066'; statusBg = '#fffbe6'; }
+            return (
+              <li key={i} style={{ marginBottom: '1.2rem', padding: '0 0.5em' }}>
+                <div style={{ fontWeight: 600, fontSize: '1em', color: '#1a2a36', marginBottom: 2 }}><span style={{ fontStyle: 'italic' }}>&quot;{c.problem}&quot;</span></div>
+                {c.topic && (<span style={{ color: '#00aae9', fontWeight: 500, fontSize: '0.95em' }}>Categoria: {c.topic}</span>)}
+                <span style={{ marginLeft: 8, fontSize: '0.85em', color: statusColor, fontWeight: 600, background: statusBg, borderRadius: 6, padding: '2px 8px' }}>{(c.status ? c.status.charAt(0).toUpperCase() + c.status.slice(1) : 'Em análise')}</span>
+                <span style={{ marginLeft: 8, fontSize: '0.85em', color: '#00aae9', fontWeight: 600 }}>
+                  👍 {c.votes || 0}
+                  {c.status !== 'Resolvido' && (
+                    <button style={{ marginLeft: 6, fontSize: '0.9em', padding: '2px 10px' }} disabled={voting[c._id] || voted[c._id] || c.status === 'Resolvido'} onClick={() => handleVote(c._id)}>
+                      {voted[c._id] ? 'Votado' : 'Votar'}
+                    </button>
+                  )}
+                </span>
+                <div style={{ fontSize: '0.9em', color: '#7a8ca3', marginTop: 2 }}>{c.timestamp ? new Date(c.timestamp).toLocaleString() : ''}</div>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
