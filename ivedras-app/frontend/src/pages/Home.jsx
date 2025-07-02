@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getComplaints } from '../api/api';
+import { getComplaints, voteComplaint } from '../api/api';
 import { Link } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
@@ -19,6 +19,14 @@ function Home() {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [voting, setVoting] = useState({});
+  const [voted, setVoted] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('votedComplaints') || '{}');
+    } catch {
+      return {};
+    }
+  });
 
   useEffect(() => {
     async function fetchData() {
@@ -45,6 +53,18 @@ function Home() {
         complaintsWithCoords.reduce((sum, c) => sum + c.longitude, 0) / complaintsWithCoords.length
       ]
     : [39.0917, -9.2589];
+
+  const handleVote = async (id) => {
+    setVoting(v => ({ ...v, [id]: true }));
+    try {
+      await voteComplaint(id);
+      setComplaints(cs => cs.map(c => c._id === id ? { ...c, votes: (c.votes || 0) + 1 } : c));
+      const newVoted = { ...voted, [id]: true };
+      setVoted(newVoted);
+      localStorage.setItem('votedComplaints', JSON.stringify(newVoted));
+    } catch {}
+    setVoting(v => ({ ...v, [id]: false }));
+  };
 
   return (
     <div style={{ padding: '3.5rem 0', maxWidth: 700, margin: '0 auto', width: '100%' }}>
@@ -107,6 +127,15 @@ function Home() {
             <li key={i} style={{ marginBottom: '1.2rem', padding: '0 0.5em' }}>
               <div style={{ fontWeight: 600, fontSize: '1em', color: '#1a2a36', marginBottom: 2 }}><span style={{ fontStyle: 'italic' }}>&quot;{c.problem}&quot;</span></div>
               {c.topic && (<span style={{ color: '#00aae9', fontWeight: 500, fontSize: '0.95em' }}>Categoria: {c.topic}</span>)}
+              <span style={{ marginLeft: 8, fontSize: '0.85em', color: c.status === 'solved' ? '#2ecc40' : '#ff9800', fontWeight: 600, background: c.status === 'solved' ? '#e8f5e9' : '#fffbe6', borderRadius: 6, padding: '2px 8px' }}>{c.status === 'solved' ? 'Resolvido' : 'Pendente'}</span>
+              <span style={{ marginLeft: 8, fontSize: '0.85em', color: '#00aae9', fontWeight: 600 }}>
+                👍 {c.votes || 0}
+                {c.status !== 'solved' && (
+                  <button style={{ marginLeft: 6, fontSize: '0.9em', padding: '2px 10px' }} disabled={voting[c._id] || voted[c._id]} onClick={() => handleVote(c._id)}>
+                    {voted[c._id] ? 'Votado' : 'Votar'}
+                  </button>
+                )}
+              </span>
               <div style={{ fontSize: '0.9em', color: '#7a8ca3', marginTop: 2 }}>{c.timestamp ? new Date(c.timestamp).toLocaleString() : ''}</div>
             </li>
           ))}

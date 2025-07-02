@@ -188,6 +188,7 @@ function ComplaintWizard() {
         longitude: location.lng,
         topic: aiCategory,
         urgency: aiUrgency,
+        status: 'pending',
         // Add more fields as needed
       });
       setSuccess(true);

@@ -24,4 +24,12 @@ export async function classifyComplaint(text) {
   });
   if (!res.ok) throw new Error('Erro ao classificar queixa');
   return await res.json();
+}
+
+export async function voteComplaint(id) {
+  const res = await fetch(`${BASE_URL}/complaints/${id}/vote`, {
+    method: 'POST',
+  });
+  if (!res.ok) throw new Error('Erro ao votar');
+  return await res.json();
 } 

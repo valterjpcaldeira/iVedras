@@ -272,6 +272,8 @@ function Dashboard() {
                 <th style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>Queixa</th>
                 <th style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>Urgência</th>
                 <th style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>Categoria</th>
+                <th style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>Estado</th>
+                <th style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>Votos</th>
               </tr>
             </thead>
             <tbody>
@@ -281,6 +283,8 @@ function Dashboard() {
                   <td style={{ padding: '0.5rem', border: '1px solid #e3eaf2', fontStyle: 'italic' }}>&quot;{c.problem}&quot;</td>
                   <td style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>{c.urgency || '-'}</td>
                   <td style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>{c.topic || '-'}</td>
+                  <td style={{ padding: '0.5rem', border: '1px solid #e3eaf2', textTransform: 'capitalize' }}>{c.status || 'pending'}</td>
+                  <td style={{ padding: '0.5rem', border: '1px solid #e3eaf2', color: '#00aae9', fontWeight: 700 }}>{c.votes || 0}</td>
                 </tr>
               ))}
             </tbody>

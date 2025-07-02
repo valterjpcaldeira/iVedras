@@ -57,6 +57,8 @@ class ComplaintIn(BaseModel):
     topic_confidence: Optional[float] = None
     urgency: Optional[str] = None
     urgency_probabilities: Optional[dict] = None
+    status: Optional[str] = 'pending'
+    votes: Optional[int] = 0
 
 class ComplaintOut(ComplaintIn):
     id: str = Field(..., alias="_id")
@@ -165,13 +167,23 @@ def get_complaints():
 @app.post("/complaints", response_model=ComplaintOut)
 def create_complaint(complaint: ComplaintIn):
     data = complaint.dict()
-    # Set timestamp if not provided
     if not data.get("timestamp"):
         data["timestamp"] = datetime.utcnow()
+    if not data.get("status"):
+        data["status"] = 'pending'
+    if data.get("votes") is None:
+        data["votes"] = 0
     result = complaints_collection.insert_one(data)
     data["_id"] = str(result.inserted_id)
-    # Return the stored complaint (with string _id and iso timestamp)
     return complaint_to_dict(data)
+
+from fastapi import Path
+@app.post("/complaints/{complaint_id}/vote")
+def vote_complaint(complaint_id: str):
+    result = complaints_collection.update_one({"_id": ObjectId(complaint_id)}, {"$inc": {"votes": 1}})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Complaint not found")
+    return {"status": "ok"}
 
 @app.on_event("startup")
 def log_port():
