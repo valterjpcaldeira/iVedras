@@ -7,6 +7,9 @@ import 'leaflet.heat';
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
 import { Chart, CategoryScale, LinearScale, BarElement, ArcElement, Tooltip as ChartTooltip, Legend, LineElement, PointElement, TimeScale } from 'chart.js';
 import 'chartjs-adapter-date-fns';
+import MarkerClusterGroup from 'react-leaflet-markercluster';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 
 Chart.register(CategoryScale, LinearScale, BarElement, ArcElement, ChartTooltip, Legend, LineElement, PointElement, TimeScale);
 
@@ -179,6 +182,17 @@ function Dashboard() {
     }],
   };
 
+  // Bar chart for requests per status
+  const barStatusChartData = {
+    labels: statusLabels,
+    datasets: [{
+      label: 'Pedidos',
+      data: statusData,
+      backgroundColor: ['#ff9800', '#2ecc40', '#00aae9', '#ffe066', '#ff3b30', '#b2e0f7'],
+      borderRadius: 8,
+    }],
+  };
+
   // Table: show all requests that are not in the state 'Resolvido'
   const notSolved = complaints.filter(c => (c.status || '').toLowerCase() !== 'resolvido');
   const sortedNotSolved = [...notSolved].sort((a, b) => (b.votes || 0) - (a.votes || 0));
@@ -205,22 +219,20 @@ function Dashboard() {
             attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
             url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
           />
-          {bubbleData.map((z, i) => (
-            <CircleMarker
-              key={i}
-              center={[z.lat, z.lng]}
-              radius={6 + Math.sqrt(z.votes > 0 ? z.votes : z.count) * 4}
-              fillColor={z.votes > 0 ? '#ff3b30' : '#00aae9'}
-              color={z.votes > 0 ? '#ff3b30' : '#00aae9'}
-              fillOpacity={0.45 + Math.min((z.votes > 0 ? z.votes : z.count) / 10, 0.4)}
-              stroke={true}
-              weight={2}
-            >
-              <Tooltip direction="top" offset={[0, -2]} opacity={1} permanent={false}>
-                {z.tooltip}
-              </Tooltip>
-            </CircleMarker>
-          ))}
+          <MarkerClusterGroup>
+            {filteredComplaints.map((c, i) => (
+              <Marker key={c._id} position={[c.latitude, c.longitude]} icon={markerIcon}>
+                <Popup>
+                  <b>{c.problem}</b><br />
+                  {c.topic && (<span><b>Categoria:</b> {c.topic}<br /></span>)}
+                  {c.urgency && (<span><b>Urgência:</b> {c.urgency}<br /></span>)}
+                  <span><b>Votos:</b> {c.votes || 0}<br /></span>
+                  <span><b>Status:</b> {c.status || 'Pendente'}<br /></span>
+                  {c.timestamp ? new Date(c.timestamp).toLocaleString() : ''}
+                </Popup>
+              </Marker>
+            ))}
+          </MarkerClusterGroup>
         </MapContainer>
         <div style={{ marginTop: 8, textAlign: 'right', fontSize: '0.95em', color: '#0077a9', opacity: 0.8 }}>
           <span style={{ background: 'linear-gradient(90deg, #b2e0f7 0%, #00aae9 60%, #ff3b30 100%)', borderRadius: 8, padding: '0.2em 1.2em', marginRight: 8, display: 'inline-block', height: 12, verticalAlign: 'middle' }}></span>
@@ -322,6 +334,15 @@ function Dashboard() {
         <h3 style={{ color: '#00aae9', fontWeight: 700, fontSize: '1.1em', marginBottom: 18 }}>Pedidos Não Resolvidos (ordenados por votos)</h3>
         <div style={{ maxWidth: 300, margin: '0 auto 1.5em auto' }}>
           <Doughnut data={statusChartData} options={{ plugins: { legend: { position: 'bottom', labels: { color: '#1a2a36', font: { weight: 500 } } } }, cutout: '70%', responsive: true, maintainAspectRatio: false, height: 80 }} height={180} />
+        </div>
+        <div style={{ maxWidth: 500, margin: '0 auto 2em auto' }}>
+          <Bar data={barStatusChartData} options={{
+            plugins: { legend: { display: false } },
+            scales: { x: { grid: { display: false }, ticks: { color: '#7a8ca3' } }, y: { beginAtZero: true, grid: { color: '#e3eaf2' } } },
+            responsive: true,
+            maintainAspectRatio: false,
+            height: 180,
+          }} height={180} />
         </div>
         {loading && <p style={{ color: '#00aae9' }}>A carregar...</p>}
         {error && <p style={{ color: '#FF3B30' }}>{error}</p>}
