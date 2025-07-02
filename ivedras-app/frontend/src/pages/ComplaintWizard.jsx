@@ -145,6 +145,19 @@ function ComplaintWizard() {
     return () => clearTimeout(debounceRef.current);
   }, [text]);
 
+  // Center map on user's current location if available
+  useEffect(() => {
+    if (step === 1 && !locationSelected && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        },
+        () => {},
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    }
+  }, [step, locationSelected]);
+
   // Step 1: Location picker (map click)
   const handleMapClick = (e) => {
     setLocation({ lat: e.latLng.lat(), lng: e.latLng.lng() });

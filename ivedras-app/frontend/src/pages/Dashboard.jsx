@@ -39,10 +39,17 @@ function HeatmapLayer({ points }) {
   useEffect(() => {
     if (!points.length) return;
     const heatLayer = L.heatLayer(points, {
-      radius: 32,
-      blur: 22,
-      gradient: { 0.4: '#00aae9', 0.65: '#00aae9', 1: '#0077a9' },
-      minOpacity: 0.3,
+      radius: 38,
+      blur: 32,
+      gradient: {
+        0.0: 'rgba(0,0,0,0)',
+        0.5: '#b2e0f7',
+        0.7: '#00aae9',
+        0.9: '#0077a9',
+        1.0: '#ff3b30'
+      },
+      minOpacity: 0.25,
+      max: 1.0,
       maxZoom: 18,
     }).addTo(map);
     return () => { map.removeLayer(heatLayer); };
@@ -164,6 +171,10 @@ function Dashboard() {
             </Marker>
           ))}
         </MapContainer>
+        <div style={{ marginTop: 8, textAlign: 'right', fontSize: '0.95em', color: '#0077a9', opacity: 0.8 }}>
+          <span style={{ background: 'linear-gradient(90deg, #b2e0f7 0%, #00aae9 60%, #ff3b30 100%)', borderRadius: 8, padding: '0.2em 1.2em', marginRight: 8, display: 'inline-block', height: 12, verticalAlign: 'middle' }}></span>
+          <span>Mais afetado</span>
+        </div>
       </div>
       <div style={{ marginBottom: '2.2rem', padding: '0 0.5em' }}>
         <h2 style={{ color: '#00aae9', fontWeight: 700, fontSize: '1.1em', margin: '1.2em 0 0.7em 0' }}>Evolução das Queixas (30 dias)</h2>
