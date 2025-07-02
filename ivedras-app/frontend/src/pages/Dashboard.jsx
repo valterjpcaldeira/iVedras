@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { getComplaints } from '../api/api';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, CircleMarker, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.heat';
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
-import { Chart, CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend, LineElement, PointElement, TimeScale } from 'chart.js';
+import { Chart, CategoryScale, LinearScale, BarElement, ArcElement, Tooltip as ChartTooltip, Legend, LineElement, PointElement, TimeScale } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 
-Chart.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend, LineElement, PointElement, TimeScale);
+Chart.register(CategoryScale, LinearScale, BarElement, ArcElement, ChartTooltip, Legend, LineElement, PointElement, TimeScale);
 
 const markerIcon = new L.Icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -92,13 +92,18 @@ function Dashboard() {
       ]
     : [39.0917, -9.2589];
 
-  // --- Heatmap by zone ---
-  const zones = groupByZone(filteredComplaints, 2); // precision=2 ~ 1km
-  const heatPoints = zones.map(z => {
-    // Find a complaint in this zone to get votes (approximate)
+  // --- Bubble Map by zone ---
+  const bubbleZones = groupByZone(filteredComplaints, 2); // precision=2 ~ 1km
+  const bubbleData = bubbleZones.map(z => {
     const complaintsInZone = filteredComplaints.filter(c => c.latitude && c.longitude && c.latitude.toFixed(2) == z.lat.toFixed(2) && c.longitude.toFixed(2) == z.lng.toFixed(2));
     const votes = complaintsInZone.reduce((sum, c) => sum + (c.votes || 0), 0);
-    return [z.lat, z.lng, votes > 0 ? votes : z.count];
+    return {
+      lat: z.lat,
+      lng: z.lng,
+      count: z.count,
+      votes,
+      tooltip: `${z.count} pedidos${votes > 0 ? `, ${votes} votos` : ''}`
+    };
   });
 
   // --- Charts ---
@@ -155,17 +160,29 @@ function Dashboard() {
   const pageSize = 10;
   const sortedPending = [...pendingComplaints].sort((a, b) => (b.votes || 0) - (a.votes || 0));
   const pagedPending = sortedPending.slice((page - 1) * pageSize, page * pageSize);
-  const totalPages = Math.ceil(sortedPending.length / pageSize);
 
-  // Chart data for pending vs solved
+  // --- Status chart data (handle any status code and show percentage) ---
+  const statusCounts = complaints.reduce((acc, c) => {
+    const status = (c.status || 'Pendente').toLowerCase();
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {});
+  const statusLabels = Object.keys(statusCounts).map(s => s.charAt(0).toUpperCase() + s.slice(1));
+  const statusData = Object.values(statusCounts);
+  const statusTotal = statusData.reduce((a, b) => a + b, 0);
   const statusChartData = {
-    labels: ['Pendente', 'Resolvido'],
+    labels: statusLabels.map((l, i) => `${l} (${((statusData[i] / statusTotal) * 100).toFixed(1)}%)`),
     datasets: [{
-      data: [pendingComplaints.length, solvedComplaints.length],
-      backgroundColor: ['#ff9800', '#2ecc40'],
+      data: statusData,
+      backgroundColor: ['#ff9800', '#2ecc40', '#00aae9', '#ffe066', '#ff3b30', '#b2e0f7'],
       borderWidth: 0,
     }],
   };
+
+  // Table: show all requests that are not in the state 'Resolvido'
+  const notSolved = complaints.filter(c => (c.status || '').toLowerCase() !== 'resolvido');
+  const sortedNotSolved = [...notSolved].sort((a, b) => (b.votes || 0) - (a.votes || 0));
+  const pagedNotSolved = sortedNotSolved.slice((page - 1) * pageSize, page * pageSize);
 
   // --- Layout ---
   return (
@@ -188,7 +205,22 @@ function Dashboard() {
             attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
             url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
           />
-          <HeatmapLayer points={heatPoints} />
+          {bubbleData.map((z, i) => (
+            <CircleMarker
+              key={i}
+              center={[z.lat, z.lng]}
+              radius={6 + Math.sqrt(z.votes > 0 ? z.votes : z.count) * 4}
+              fillColor={z.votes > 0 ? '#ff3b30' : '#00aae9'}
+              color={z.votes > 0 ? '#ff3b30' : '#00aae9'}
+              fillOpacity={0.45 + Math.min((z.votes > 0 ? z.votes : z.count) / 10, 0.4)}
+              stroke={true}
+              weight={2}
+            >
+              <Tooltip direction="top" offset={[0, -2]} opacity={1} permanent={false}>
+                {z.tooltip}
+              </Tooltip>
+            </CircleMarker>
+          ))}
         </MapContainer>
         <div style={{ marginTop: 8, textAlign: 'right', fontSize: '0.95em', color: '#0077a9', opacity: 0.8 }}>
           <span style={{ background: 'linear-gradient(90deg, #b2e0f7 0%, #00aae9 60%, #ff3b30 100%)', borderRadius: 8, padding: '0.2em 1.2em', marginRight: 8, display: 'inline-block', height: 12, verticalAlign: 'middle' }}></span>
@@ -287,7 +319,7 @@ function Dashboard() {
         </div>
       </div>
       <div className="card" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,170,233,0.10)', padding: '1.2em 1em', width: '100%', maxWidth: '100vw' }}>
-        <h3 style={{ color: '#00aae9', fontWeight: 700, fontSize: '1.1em', marginBottom: 18 }}>Pedidos Pendentes (ordenados por votos)</h3>
+        <h3 style={{ color: '#00aae9', fontWeight: 700, fontSize: '1.1em', marginBottom: 18 }}>Pedidos Não Resolvidos (ordenados por votos)</h3>
         <div style={{ maxWidth: 300, margin: '0 auto 1.5em auto' }}>
           <Doughnut data={statusChartData} options={{ plugins: { legend: { position: 'bottom', labels: { color: '#1a2a36', font: { weight: 500 } } } }, cutout: '70%', responsive: true, maintainAspectRatio: false, height: 80 }} height={180} />
         </div>
@@ -306,7 +338,7 @@ function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {pagedPending.map((c, i) => (
+                {pagedNotSolved.map((c, i) => (
                   <tr key={c._id}>
                     <td style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>{c.timestamp ? new Date(c.timestamp).toLocaleString() : ''}</td>
                     <td style={{ padding: '0.5rem', border: '1px solid #e3eaf2', fontStyle: 'italic' }}>&quot;{c.problem}&quot;</td>
@@ -319,8 +351,8 @@ function Dashboard() {
             </table>
             <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 16 }}>
               <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Anterior</button>
-              <span style={{ fontWeight: 600, color: '#00aae9' }}>{page} / {totalPages}</span>
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Próxima</button>
+              <span style={{ fontWeight: 600, color: '#00aae9' }}>{page} / {Math.ceil(sortedNotSolved.length / pageSize)}</span>
+              <button onClick={() => setPage(p => Math.min(Math.ceil(sortedNotSolved.length / pageSize), p + 1))} disabled={page === Math.ceil(sortedNotSolved.length / pageSize)}>Próxima</button>
             </div>
           </>
         )}
