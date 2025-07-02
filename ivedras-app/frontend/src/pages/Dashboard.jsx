@@ -7,6 +7,7 @@ import 'leaflet.heat';
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
 import { Chart, CategoryScale, LinearScale, BarElement, ArcElement, Tooltip as ChartTooltip, Legend, LineElement, PointElement, TimeScale } from 'chart.js';
 import 'chartjs-adapter-date-fns';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 
 Chart.register(CategoryScale, LinearScale, BarElement, ArcElement, ChartTooltip, Legend, LineElement, PointElement, TimeScale);
 
@@ -211,27 +212,25 @@ function Dashboard() {
             {allUrgencies.map(u => <option key={u} value={u}>{u}</option>)}
           </select>
         </div>
-        <MapContainer center={mapCenter} zoom={11} style={{ height: '320px', width: '100%', borderRadius: '10px', minWidth: 0 }}>
+        <MapContainer center={mapCenter} zoom={10} style={{ height: '320px', width: '100%', borderRadius: '10px', minWidth: 0 }}>
           <TileLayer
             attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
             url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
           />
-          {bubbleData.map((z, i) => (
-            <CircleMarker
-              key={i}
-              center={[z.lat, z.lng]}
-              radius={6 + Math.sqrt(z.votes > 0 ? z.votes : z.count) * 4}
-              fillColor={z.votes > 0 ? '#ff3b30' : '#00aae9'}
-              color={z.votes > 0 ? '#ff3b30' : '#00aae9'}
-              fillOpacity={0.45 + Math.min((z.votes > 0 ? z.votes : z.count) / 10, 0.4)}
-              stroke={true}
-              weight={2}
-            >
-              <Tooltip direction="top" offset={[0, -2]} opacity={1} permanent={false}>
-                {z.tooltip}
-              </Tooltip>
-            </CircleMarker>
-          ))}
+          <MarkerClusterGroup>
+            {filteredComplaints.map((c, i) => (
+              <Marker key={c._id} position={[c.latitude, c.longitude]} icon={markerIcon}>
+                <Popup>
+                  <b>{c.problem}</b><br />
+                  {c.topic && (<span><b>Categoria:</b> {c.topic}<br /></span>)}
+                  {c.urgency && (<span><b>Urgência:</b> {c.urgency}<br /></span>)}
+                  <span><b>Votos:</b> {c.votes || 0}<br /></span>
+                  <span><b>Status:</b> {c.status || 'Pendente'}<br /></span>
+                  {c.timestamp ? new Date(c.timestamp).toLocaleString() : ''}
+                </Popup>
+              </Marker>
+            ))}
+          </MarkerClusterGroup>
         </MapContainer>
         <div style={{ marginTop: 8, textAlign: 'right', fontSize: '0.95em', color: '#0077a9', opacity: 0.8 }}>
           <span style={{ background: 'linear-gradient(90deg, #b2e0f7 0%, #00aae9 60%, #ff3b30 100%)', borderRadius: 8, padding: '0.2em 1.2em', marginRight: 8, display: 'inline-block', height: 12, verticalAlign: 'middle' }}></span>
@@ -331,51 +330,47 @@ function Dashboard() {
       </div>
       <div className="card" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,170,233,0.10)', padding: '1.2em 1em', width: '100%', maxWidth: '100vw' }}>
         <h3 style={{ color: '#00aae9', fontWeight: 700, fontSize: '1.1em', marginBottom: 18 }}>Pedidos Não Resolvidos (ordenados por votos)</h3>
-        <div style={{ maxWidth: 300, margin: '0 auto 1.5em auto' }}>
-          <Doughnut data={statusChartData} options={{ plugins: { legend: { position: 'bottom', labels: { color: '#1a2a36', font: { weight: 500 } } } }, cutout: '70%', responsive: true, maintainAspectRatio: false, height: 80 }} height={180} />
-        </div>
-        <div style={{ maxWidth: 500, margin: '0 auto 2em auto' }}>
-          <Bar data={barStatusChartData} options={{
-            plugins: { legend: { display: false } },
-            scales: { x: { grid: { display: false }, ticks: { color: '#7a8ca3' } }, y: { beginAtZero: true, grid: { color: '#e3eaf2' } } },
-            responsive: true,
-            maintainAspectRatio: false,
-            height: 180,
-          }} height={180} />
-        </div>
-        {loading && <p style={{ color: '#00aae9' }}>A carregar...</p>}
-        {error && <p style={{ color: '#FF3B30' }}>{error}</p>}
-        {!loading && !error && (
-          <>
-            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem', fontSize: '1em', wordBreak: 'break-word' }}>
-              <thead>
-                <tr style={{ background: '#f7fbfd' }}>
-                  <th style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>Data</th>
-                  <th style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>Queixa</th>
-                  <th style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>Urgência</th>
-                  <th style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>Categoria</th>
-                  <th style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>Votos</th>
+        <div style={{ overflowX: 'auto', borderRadius: 12, boxShadow: '0 2px 12px #00aae911', marginBottom: 16 }}>
+          <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, fontSize: '1em', wordBreak: 'break-word', background: '#f7fbfd', borderRadius: 12, overflow: 'hidden' }}>
+            <thead>
+              <tr style={{ background: '#e3eaf2' }}>
+                <th style={{ padding: '0.7rem', borderBottom: '2px solid #00aae9', color: '#0077a9', fontWeight: 700 }}>Data</th>
+                <th style={{ padding: '0.7rem', borderBottom: '2px solid #00aae9', color: '#0077a9', fontWeight: 700 }}>Queixa</th>
+                <th style={{ padding: '0.7rem', borderBottom: '2px solid #00aae9', color: '#0077a9', fontWeight: 700 }}>Urgência</th>
+                <th style={{ padding: '0.7rem', borderBottom: '2px solid #00aae9', color: '#0077a9', fontWeight: 700 }}>Categoria</th>
+                <th style={{ padding: '0.7rem', borderBottom: '2px solid #00aae9', color: '#0077a9', fontWeight: 700 }}>Votos</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pagedNotSolved.map((c, i) => (
+                <tr key={c._id} style={{ background: i % 2 === 0 ? '#fff' : '#f7fbfd', transition: 'background 0.2s' }}>
+                  <td style={{ padding: '0.7rem', borderBottom: '1px solid #e3eaf2', color: '#7a8ca3', fontWeight: 500 }}>{c.timestamp ? new Date(c.timestamp).toLocaleString() : ''}</td>
+                  <td style={{ padding: '0.7rem', borderBottom: '1px solid #e3eaf2', fontStyle: 'italic', color: '#1a2a36', fontWeight: 600 }}>{c.problem}</td>
+                  <td style={{ padding: '0.7rem', borderBottom: '1px solid #e3eaf2', color: c.urgency === 'Urgente' ? '#ff3b30' : '#00aae9', fontWeight: 600 }}>{c.urgency || '-'}</td>
+                  <td style={{ padding: '0.7rem', borderBottom: '1px solid #e3eaf2', color: '#00aae9', fontWeight: 600 }}>{c.topic || '-'}</td>
+                  <td style={{ padding: '0.7rem', borderBottom: '1px solid #e3eaf2', color: '#ff9800', fontWeight: 700, textAlign: 'center' }}>{c.votes || 0}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {pagedNotSolved.map((c, i) => (
-                  <tr key={c._id}>
-                    <td style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>{c.timestamp ? new Date(c.timestamp).toLocaleString() : ''}</td>
-                    <td style={{ padding: '0.5rem', border: '1px solid #e3eaf2', fontStyle: 'italic' }}>&quot;{c.problem}&quot;</td>
-                    <td style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>{c.urgency || '-'}</td>
-                    <td style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>{c.topic || '-'}</td>
-                    <td style={{ padding: '0.5rem', border: '1px solid #e3eaf2', color: '#00aae9', fontWeight: 700 }}>{c.votes || 0}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 16 }}>
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Anterior</button>
-              <span style={{ fontWeight: 600, color: '#00aae9' }}>{page} / {Math.ceil(sortedNotSolved.length / pageSize)}</span>
-              <button onClick={() => setPage(p => Math.min(Math.ceil(sortedNotSolved.length / pageSize), p + 1))} disabled={page === Math.ceil(sortedNotSolved.length / pageSize)}>Próxima</button>
-            </div>
-          </>
-        )}
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 16 }}>
+          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Anterior</button>
+          <span style={{ fontWeight: 600, color: '#00aae9' }}>{page} / {Math.ceil(sortedNotSolved.length / pageSize)}</span>
+          <button onClick={() => setPage(p => Math.min(Math.ceil(sortedNotSolved.length / pageSize), p + 1))} disabled={page === Math.ceil(sortedNotSolved.length / pageSize)}>Próxima</button>
+        </div>
+      </div>
+      <div style={{ maxWidth: 500, margin: '0 auto 2em auto' }}>
+        <div style={{ textAlign: 'center', color: '#7a8ca3', fontSize: '0.98em', marginBottom: 4 }}>
+          Estado dos pedidos (últimos 6 meses)
+        </div>
+        <Bar data={barStatusChartData} options={{
+          plugins: { legend: { display: false } },
+          scales: { x: { grid: { display: false }, ticks: { color: '#7a8ca3' } }, y: { beginAtZero: true, grid: { color: '#e3eaf2' } } },
+          responsive: true,
+          maintainAspectRatio: false,
+          height: 180,
+        }} height={180} />
       </div>
     </div>
   );
