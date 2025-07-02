@@ -7,9 +7,6 @@ import 'leaflet.heat';
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
 import { Chart, CategoryScale, LinearScale, BarElement, ArcElement, Tooltip as ChartTooltip, Legend, LineElement, PointElement, TimeScale } from 'chart.js';
 import 'chartjs-adapter-date-fns';
-import MarkerClusterGroup from 'react-leaflet-markercluster';
-import 'leaflet.markercluster/dist/MarkerCluster.css';
-import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 
 Chart.register(CategoryScale, LinearScale, BarElement, ArcElement, ChartTooltip, Legend, LineElement, PointElement, TimeScale);
 
@@ -219,20 +216,22 @@ function Dashboard() {
             attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
             url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
           />
-          <MarkerClusterGroup>
-            {filteredComplaints.map((c, i) => (
-              <Marker key={c._id} position={[c.latitude, c.longitude]} icon={markerIcon}>
-                <Popup>
-                  <b>{c.problem}</b><br />
-                  {c.topic && (<span><b>Categoria:</b> {c.topic}<br /></span>)}
-                  {c.urgency && (<span><b>Urgência:</b> {c.urgency}<br /></span>)}
-                  <span><b>Votos:</b> {c.votes || 0}<br /></span>
-                  <span><b>Status:</b> {c.status || 'Pendente'}<br /></span>
-                  {c.timestamp ? new Date(c.timestamp).toLocaleString() : ''}
-                </Popup>
-              </Marker>
-            ))}
-          </MarkerClusterGroup>
+          {bubbleData.map((z, i) => (
+            <CircleMarker
+              key={i}
+              center={[z.lat, z.lng]}
+              radius={6 + Math.sqrt(z.votes > 0 ? z.votes : z.count) * 4}
+              fillColor={z.votes > 0 ? '#ff3b30' : '#00aae9'}
+              color={z.votes > 0 ? '#ff3b30' : '#00aae9'}
+              fillOpacity={0.45 + Math.min((z.votes > 0 ? z.votes : z.count) / 10, 0.4)}
+              stroke={true}
+              weight={2}
+            >
+              <Tooltip direction="top" offset={[0, -2]} opacity={1} permanent={false}>
+                {z.tooltip}
+              </Tooltip>
+            </CircleMarker>
+          ))}
         </MapContainer>
         <div style={{ marginTop: 8, textAlign: 'right', fontSize: '0.95em', color: '#0077a9', opacity: 0.8 }}>
           <span style={{ background: 'linear-gradient(90deg, #b2e0f7 0%, #00aae9 60%, #ff3b30 100%)', borderRadius: 8, padding: '0.2em 1.2em', marginRight: 8, display: 'inline-block', height: 12, verticalAlign: 'middle' }}></span>
