@@ -146,6 +146,27 @@ function Dashboard() {
   const urgencyLabels = Object.keys(urgencyCounts);
   const urgencyData = Object.values(urgencyCounts);
 
+  // Pending and solved complaints
+  const pendingComplaints = complaints.filter(c => (c.status || 'pending') === 'pending');
+  const solvedComplaints = complaints.filter(c => c.status === 'solved');
+
+  // Pagination for pending complaints
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const sortedPending = [...pendingComplaints].sort((a, b) => (b.votes || 0) - (a.votes || 0));
+  const pagedPending = sortedPending.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages = Math.ceil(sortedPending.length / pageSize);
+
+  // Chart data for pending vs solved
+  const statusChartData = {
+    labels: ['Pendente', 'Resolvido'],
+    datasets: [{
+      data: [pendingComplaints.length, solvedComplaints.length],
+      backgroundColor: ['#ff9800', '#2ecc40'],
+      borderWidth: 0,
+    }],
+  };
+
   // --- Layout ---
   return (
     <div style={{ padding: '2.5rem 0', maxWidth: 900, margin: '0 auto', width: '100%' }}>
@@ -266,34 +287,42 @@ function Dashboard() {
         </div>
       </div>
       <div className="card" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,170,233,0.10)', padding: '1.2em 1em', width: '100%', maxWidth: '100vw' }}>
-        <h3 style={{ color: '#00aae9', fontWeight: 700, fontSize: '1.1em', marginBottom: 18 }}>Lista de Queixas</h3>
+        <h3 style={{ color: '#00aae9', fontWeight: 700, fontSize: '1.1em', marginBottom: 18 }}>Pedidos Pendentes (ordenados por votos)</h3>
+        <div style={{ maxWidth: 300, margin: '0 auto 1.5em auto' }}>
+          <Doughnut data={statusChartData} options={{ plugins: { legend: { position: 'bottom', labels: { color: '#1a2a36', font: { weight: 500 } } } }, cutout: '70%', responsive: true, maintainAspectRatio: false, height: 80 }} height={180} />
+        </div>
         {loading && <p style={{ color: '#00aae9' }}>A carregar...</p>}
         {error && <p style={{ color: '#FF3B30' }}>{error}</p>}
         {!loading && !error && (
-          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem', fontSize: '1em', wordBreak: 'break-word' }}>
-            <thead>
-              <tr style={{ background: '#f7fbfd' }}>
-                <th style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>Data</th>
-                <th style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>Queixa</th>
-                <th style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>Urgência</th>
-                <th style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>Categoria</th>
-                <th style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>Estado</th>
-                <th style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>Votos</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredComplaints.map((c, i) => (
-                <tr key={i}>
-                  <td style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>{c.timestamp ? new Date(c.timestamp).toLocaleString() : ''}</td>
-                  <td style={{ padding: '0.5rem', border: '1px solid #e3eaf2', fontStyle: 'italic' }}>&quot;{c.problem}&quot;</td>
-                  <td style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>{c.urgency || '-'}</td>
-                  <td style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>{c.topic || '-'}</td>
-                  <td style={{ padding: '0.5rem', border: '1px solid #e3eaf2', textTransform: 'capitalize' }}>{c.status || 'pending'}</td>
-                  <td style={{ padding: '0.5rem', border: '1px solid #e3eaf2', color: '#00aae9', fontWeight: 700 }}>{c.votes || 0}</td>
+          <>
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem', fontSize: '1em', wordBreak: 'break-word' }}>
+              <thead>
+                <tr style={{ background: '#f7fbfd' }}>
+                  <th style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>Data</th>
+                  <th style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>Queixa</th>
+                  <th style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>Urgência</th>
+                  <th style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>Categoria</th>
+                  <th style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>Votos</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {pagedPending.map((c, i) => (
+                  <tr key={c._id}>
+                    <td style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>{c.timestamp ? new Date(c.timestamp).toLocaleString() : ''}</td>
+                    <td style={{ padding: '0.5rem', border: '1px solid #e3eaf2', fontStyle: 'italic' }}>&quot;{c.problem}&quot;</td>
+                    <td style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>{c.urgency || '-'}</td>
+                    <td style={{ padding: '0.5rem', border: '1px solid #e3eaf2' }}>{c.topic || '-'}</td>
+                    <td style={{ padding: '0.5rem', border: '1px solid #e3eaf2', color: '#00aae9', fontWeight: 700 }}>{c.votes || 0}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 16 }}>
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Anterior</button>
+              <span style={{ fontWeight: 600, color: '#00aae9' }}>{page} / {totalPages}</span>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Próxima</button>
+            </div>
+          </>
         )}
       </div>
     </div>

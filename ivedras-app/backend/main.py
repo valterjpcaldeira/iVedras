@@ -57,7 +57,7 @@ class ComplaintIn(BaseModel):
     topic_confidence: Optional[float] = None
     urgency: Optional[str] = None
     urgency_probabilities: Optional[dict] = None
-    status: Optional[str] = 'pending'
+    status: Optional[str] = 'Em Análise'
     votes: Optional[int] = 0
 
 class ComplaintOut(ComplaintIn):

@@ -44,6 +44,7 @@ function Home() {
     fetchData();
   }, []);
 
+  // Move these inside the render so they always use the latest complaints
   // Only show complaints with valid coordinates on the map
   const recentComplaints = complaints.slice(0, 10);
   const complaintsWithCoords = recentComplaints.filter(c => c.latitude && c.longitude);
