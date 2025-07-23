@@ -92,7 +92,7 @@ function TextStep({ text, setText, aiCategory, aiUrgency, aiCategoryConfidence, 
 }
 
 function ReviewStep({ location, text, aiCategory, aiUrgency, aiCategoryConfidence, aiUrgencyConfidence, error, setStep, handleSubmit, submitting, canSubmit }) {
-  const confidenceThreshold = 0.4;
+  const confidenceThreshold = 0.15;
   const lowConfidence = (aiCategoryConfidence !== null && aiCategoryConfidence < confidenceThreshold) ||
                        (aiUrgencyConfidence !== null && aiUrgencyConfidence < confidenceThreshold);
   return (
@@ -209,7 +209,7 @@ function ComplaintWizard() {
     }
   };
 
-  const confidenceThreshold = 0.4;
+  const confidenceThreshold = 0.15;
   const canSubmit =
     aiCategoryConfidence !== null && aiUrgencyConfidence !== null &&
     aiCategoryConfidence >= confidenceThreshold &&
