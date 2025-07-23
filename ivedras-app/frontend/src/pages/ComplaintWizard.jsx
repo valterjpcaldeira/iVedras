@@ -91,7 +91,10 @@ function TextStep({ text, setText, aiCategory, aiUrgency, aiCategoryConfidence, 
   );
 }
 
-function ReviewStep({ location, text, aiCategory, aiUrgency, aiCategoryConfidence, aiUrgencyConfidence, error, setStep, handleSubmit, submitting }) {
+function ReviewStep({ location, text, aiCategory, aiUrgency, aiCategoryConfidence, aiUrgencyConfidence, error, setStep, handleSubmit, submitting, canSubmit }) {
+  const confidenceThreshold = 0.4;
+  const lowConfidence = (aiCategoryConfidence !== null && aiCategoryConfidence < confidenceThreshold) ||
+                       (aiUrgencyConfidence !== null && aiUrgencyConfidence < confidenceThreshold);
   return (
     <div style={{ marginBottom: '1.5rem' }}>
       <h3>Rever e Submeter</h3>
@@ -100,9 +103,16 @@ function ReviewStep({ location, text, aiCategory, aiUrgency, aiCategoryConfidenc
       {/* AI suggestions */}
       <p><b>Categoria sugerida:</b> {aiCategory ? `${aiCategory} (${(aiCategoryConfidence * 100).toFixed(1)}%)` : '[Sem sugestão]'}</p>
       <p><b>Urgência sugerida:</b> {aiUrgency ? `${aiUrgency} (${(aiUrgencyConfidence * 100).toFixed(1)}%)` : '[Sem sugestão]'}</p>
+      {lowConfidence && (
+        <div style={{ color: '#FF3B30', margin: '1em 0', fontWeight: 600 }}>
+          A confiança do modelo é baixa. Por favor, adicione mais detalhes à descrição do problema para melhorar a classificação automática.
+        </div>
+      )}
       <div style={{ marginTop: '1.5rem' }}>
         <button onClick={() => setStep(2)}>Voltar</button>
-        <button style={{ marginLeft: '1rem' }} onClick={handleSubmit} disabled={submitting}>{submitting ? 'A Submeter...' : 'Submeter Queixa'}</button>
+        <button style={{ marginLeft: '1rem' }} onClick={handleSubmit} disabled={submitting || !canSubmit}>
+          {submitting ? 'A Submeter...' : 'Submeter Queixa'}
+        </button>
       </div>
       {error && <div style={{ color: 'red', marginTop: '1rem' }}>{error}</div>}
     </div>
@@ -199,6 +209,12 @@ function ComplaintWizard() {
     }
   };
 
+  const confidenceThreshold = 0.4;
+  const canSubmit =
+    aiCategoryConfidence !== null && aiUrgencyConfidence !== null &&
+    aiCategoryConfidence >= confidenceThreshold &&
+    aiUrgencyConfidence >= confidenceThreshold;
+
   if (success) {
     return (
       <div style={{ padding: '2rem' }}>
@@ -240,6 +256,7 @@ function ComplaintWizard() {
             setStep={setStep}
             handleSubmit={handleSubmit}
             submitting={submitting}
+            canSubmit={canSubmit}
           />
         )}
       </div>
