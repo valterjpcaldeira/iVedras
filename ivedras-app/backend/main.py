@@ -7,6 +7,8 @@ from datetime import datetime
 import os
 from dotenv import load_dotenv
 import logging
+import re
+from difflib import SequenceMatcher
 
 # HuggingFace imports
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
@@ -118,6 +120,33 @@ TOPIC_LABELS = [
 ]
 URGENCY_LABELS = ["Não Urgente", "Urgente"]
 
+# Load banned words from file
+BANNED_WORDS = []
+BANNED_WORDS_PATH = os.path.join(os.path.dirname(__file__), "banned_words.txt")
+try:
+    with open(BANNED_WORDS_PATH, encoding="utf-8") as f:
+        BANNED_WORDS = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+    logger.info(f"Loaded {len(BANNED_WORDS)} banned words from {BANNED_WORDS_PATH}")
+except Exception as e:
+    logger.error(f"Failed to load banned words: {e}")
+
+def contains_banned_word(text: str, threshold: float = 0.85) -> bool:
+    """
+    Check if the text contains any banned word or a similar word (case-insensitive).
+    Uses substring and fuzzy matching.
+    """
+    text_lower = text.lower()
+    for banned in BANNED_WORDS:
+        banned_lower = banned.lower()
+        # Substring match
+        if banned_lower in text_lower:
+            return True
+        # Fuzzy match (word by word)
+        for word in re.findall(r"\w+", text_lower):
+            if SequenceMatcher(None, word, banned_lower).ratio() >= threshold:
+                return True
+    return False
+
 @app.get("/")
 def read_root():
     return {"status": "ok"}
@@ -167,6 +196,9 @@ def get_complaints():
 @app.post("/complaints", response_model=ComplaintOut)
 def create_complaint(complaint: ComplaintIn):
     data = complaint.dict()
+    # Check for banned words in the 'problem' field
+    if contains_banned_word(data.get("problem", "")):
+        raise HTTPException(status_code=400, detail="Complaint contains inappropriate language.")
     if not data.get("timestamp"):
         data["timestamp"] = datetime.utcnow()
     if not data.get("status"):
