@@ -91,7 +91,7 @@ function TextStep({ text, setText, aiCategory, aiUrgency, aiCategoryConfidence, 
   );
 }
 
-function ReviewStep({ location, text, aiCategory, aiUrgency, aiCategoryConfidence, aiUrgencyConfidence, error, setStep, handleSubmit, submitting, canSubmit }) {
+function ReviewStep({ location, text, aiCategory, aiUrgency, aiCategoryConfidence, aiUrgencyConfidence, error, setStep, handleSubmit, submitting }) {
   const confidenceThreshold = 0.15;
   const lowConfidence = (aiCategoryConfidence !== null && aiCategoryConfidence < confidenceThreshold) ||
                        (aiUrgencyConfidence !== null && aiUrgencyConfidence < confidenceThreshold);
@@ -110,7 +110,7 @@ function ReviewStep({ location, text, aiCategory, aiUrgency, aiCategoryConfidenc
       )}
       <div style={{ marginTop: '1.5rem' }}>
         <button onClick={() => setStep(2)}>Voltar</button>
-        <button style={{ marginLeft: '1rem' }} onClick={handleSubmit} disabled={submitting || !canSubmit}>
+        <button style={{ marginLeft: '1rem' }} onClick={handleSubmit} disabled={submitting}>
           {submitting ? 'A Submeter...' : 'Submeter Queixa'}
         </button>
       </div>
@@ -256,7 +256,7 @@ function ComplaintWizard() {
             setStep={setStep}
             handleSubmit={handleSubmit}
             submitting={submitting}
-            canSubmit={canSubmit}
+            /* canSubmit={canSubmit} */
           />
         )}
       </div>
